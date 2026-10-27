@@ -1,0 +1,777 @@
+<humanTask xmlns="http://www.omg.org/spec/CMMN/20151109/MODEL" xmlns:cafienne="org.cafienne">
+    <cafienne:implementation name="ReviewProgress" class="org.cafienne.cmmn.definition.task.WorkflowTaskDefinition">
+        <documentation textFormat="text/plain">
+            <text><![CDATA[Review progress. Owner: Manager. Starts on the 14-day timer or on Request early review, whichever comes first.]]></text>
+        </documentation>
+        <input id="i_Plan__review_progress" name="Plan"/>
+        <input id="i_Activities__review_progress" name="Activities"/>
+        <input id="i_ProgressReviews__review_progress" name="ProgressReviews"/>
+        <output id="o_ProgressReview__review_progress" name="ProgressReview"/>
+        <task-model><![CDATA[{
+  "schema": {
+    "title": "Review progress",
+    "description": "Record how the plan is going. Tick \"The plan has been carried out\" to start the evaluation; otherwise the next check is in 14 days.",
+    "type": "object",
+    "required": [
+      "ProgressReview"
+    ],
+    "properties": {
+      "Plan": {
+        "type": "object",
+        "title": "Development plan",
+        "properties": {
+          "period": {
+            "type": "string",
+            "title": "Plan period"
+          },
+          "goals": {
+            "type": "array",
+            "title": "Goals",
+            "items": {
+              "type": "object",
+              "title": "Goal",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "title": "Goal"
+                },
+                "type": {
+                  "type": "string",
+                  "title": "Type",
+                  "enum": [
+                    "SKILL",
+                    "KNOWLEDGE",
+                    "BEHAVIOUR",
+                    "CAREER"
+                  ],
+                  "enumNames": [
+                    "Skill",
+                    "Knowledge",
+                    "Behaviour",
+                    "Career"
+                  ]
+                },
+                "description": {
+                  "type": "string",
+                  "title": "Description"
+                },
+                "successCriteria": {
+                  "type": "string",
+                  "title": "How we know it is achieved"
+                },
+                "targetDate": {
+                  "type": "string",
+                  "title": "Target date",
+                  "format": "date"
+                }
+              },
+              "required": [
+                "title",
+                "type",
+                "successCriteria",
+                "targetDate"
+              ]
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "period",
+          "goals"
+        ]
+      },
+      "Activities": {
+        "type": "array",
+        "title": "Activities in this round",
+        "items": {
+          "type": "object",
+          "title": "Activity",
+          "properties": {
+            "type": {
+              "type": "string",
+              "title": "Type",
+              "enum": [
+                "PROJECT",
+                "TRAINING",
+                "COACHING"
+              ],
+              "enumNames": [
+                "Project",
+                "Training",
+                "Coaching"
+              ]
+            },
+            "description": {
+              "type": "string",
+              "title": "Description"
+            },
+            "relatedGoal": {
+              "type": "string",
+              "title": "Supports goal"
+            },
+            "dueDate": {
+              "type": "string",
+              "title": "Due date",
+              "format": "date"
+            },
+            "status": {
+              "type": "string",
+              "title": "Status",
+              "enum": [
+                "PLANNED",
+                "IN_PROGRESS",
+                "DONE"
+              ],
+              "enumNames": [
+                "Planned",
+                "In progress",
+                "Done"
+              ]
+            },
+            "outcome": {
+              "type": "string",
+              "title": "Outcome"
+            }
+          }
+        }
+      },
+      "ProgressReviews": {
+        "type": "array",
+        "title": "Progress reviews in this round",
+        "items": {
+          "type": "object",
+          "title": "Review",
+          "properties": {
+            "date": {
+              "type": "string",
+              "title": "Review date",
+              "format": "date"
+            },
+            "onTrack": {
+              "type": "boolean",
+              "title": "On track",
+              "default": true
+            },
+            "notes": {
+              "type": "string",
+              "title": "Notes"
+            },
+            "adjustments": {
+              "type": "string",
+              "title": "Adjustments to the plan"
+            },
+            "planCompleted": {
+              "type": "boolean",
+              "title": "The plan has been carried out: start the evaluation",
+              "default": false
+            }
+          }
+        }
+      },
+      "ProgressReview": {
+        "type": "object",
+        "title": "Progress review",
+        "properties": {
+          "date": {
+            "type": "string",
+            "title": "Review date",
+            "format": "date"
+          },
+          "onTrack": {
+            "type": "boolean",
+            "title": "On track",
+            "default": true
+          },
+          "notes": {
+            "type": "string",
+            "title": "Notes"
+          },
+          "adjustments": {
+            "type": "string",
+            "title": "Adjustments to the plan"
+          },
+          "planCompleted": {
+            "type": "boolean",
+            "title": "The plan has been carried out: start the evaluation",
+            "default": false
+          }
+        },
+        "required": [
+          "date",
+          "onTrack",
+          "planCompleted"
+        ]
+      }
+    }
+  },
+  "uiSchema": {
+    "Plan": {
+      "ui:order": [
+        "period",
+        "goals"
+      ],
+      "goals": {
+        "items": {
+          "ui:order": [
+            "title",
+            "type",
+            "description",
+            "successCriteria",
+            "targetDate"
+          ],
+          "description": {
+            "ui:widget": "textarea",
+            "ui:options": {
+              "rows": 3
+            }
+          },
+          "successCriteria": {
+            "ui:widget": "textarea",
+            "ui:options": {
+              "rows": 3
+            }
+          }
+        },
+        "ui:options": {
+          "addable": false,
+          "removable": false,
+          "orderable": false
+        },
+        "ui:readonly": true
+      },
+      "ui:readonly": true
+    },
+    "Activities": {
+      "items": {
+        "ui:order": [
+          "type",
+          "description",
+          "relatedGoal",
+          "dueDate",
+          "status",
+          "outcome"
+        ],
+        "description": {
+          "ui:widget": "textarea",
+          "ui:options": {
+            "rows": 3
+          }
+        },
+        "outcome": {
+          "ui:widget": "textarea",
+          "ui:options": {
+            "rows": 3
+          }
+        }
+      },
+      "ui:options": {
+        "addable": false,
+        "removable": false,
+        "orderable": false
+      },
+      "ui:readonly": true
+    },
+    "ProgressReviews": {
+      "items": {
+        "ui:order": [
+          "date",
+          "onTrack",
+          "notes",
+          "adjustments",
+          "planCompleted"
+        ],
+        "notes": {
+          "ui:widget": "textarea",
+          "ui:options": {
+            "rows": 3
+          }
+        },
+        "adjustments": {
+          "ui:widget": "textarea",
+          "ui:options": {
+            "rows": 3
+          }
+        }
+      },
+      "ui:options": {
+        "addable": false,
+        "removable": false,
+        "orderable": false
+      },
+      "ui:readonly": true
+    },
+    "ProgressReview": {
+      "ui:order": [
+        "date",
+        "onTrack",
+        "notes",
+        "adjustments",
+        "planCompleted"
+      ],
+      "notes": {
+        "ui:widget": "textarea",
+        "ui:options": {
+          "rows": 3
+        }
+      },
+      "adjustments": {
+        "ui:widget": "textarea",
+        "ui:options": {
+          "rows": 3
+        }
+      }
+    },
+    "ui:order": [
+      "Plan",
+      "Activities",
+      "ProgressReviews",
+      "ProgressReview"
+    ]
+  },
+  "jsonforms": {
+    "schema": {
+      "title": "Review progress",
+      "description": "Record how the plan is going. Tick \"The plan has been carried out\" to start the evaluation; otherwise the next check is in 14 days.",
+      "type": "object",
+      "required": [
+        "ProgressReview"
+      ],
+      "properties": {
+        "Plan": {
+          "type": "object",
+          "title": "Development plan",
+          "properties": {
+            "period": {
+              "type": "string",
+              "title": "Plan period"
+            },
+            "goals": {
+              "type": "array",
+              "title": "Goals",
+              "items": {
+                "type": "object",
+                "title": "Goal",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "title": "Goal"
+                  },
+                  "type": {
+                    "type": "string",
+                    "title": "Type",
+                    "oneOf": [
+                      {
+                        "const": "SKILL",
+                        "title": "Skill"
+                      },
+                      {
+                        "const": "KNOWLEDGE",
+                        "title": "Knowledge"
+                      },
+                      {
+                        "const": "BEHAVIOUR",
+                        "title": "Behaviour"
+                      },
+                      {
+                        "const": "CAREER",
+                        "title": "Career"
+                      }
+                    ]
+                  },
+                  "description": {
+                    "type": "string",
+                    "title": "Description"
+                  },
+                  "successCriteria": {
+                    "type": "string",
+                    "title": "How we know it is achieved"
+                  },
+                  "targetDate": {
+                    "type": "string",
+                    "title": "Target date",
+                    "format": "date"
+                  }
+                },
+                "required": [
+                  "title",
+                  "type",
+                  "successCriteria",
+                  "targetDate"
+                ]
+              },
+              "minItems": 1
+            }
+          },
+          "required": [
+            "period",
+            "goals"
+          ]
+        },
+        "Activities": {
+          "type": "array",
+          "title": "Activities in this round",
+          "items": {
+            "type": "object",
+            "title": "Activity",
+            "properties": {
+              "type": {
+                "type": "string",
+                "title": "Type",
+                "oneOf": [
+                  {
+                    "const": "PROJECT",
+                    "title": "Project"
+                  },
+                  {
+                    "const": "TRAINING",
+                    "title": "Training"
+                  },
+                  {
+                    "const": "COACHING",
+                    "title": "Coaching"
+                  }
+                ]
+              },
+              "description": {
+                "type": "string",
+                "title": "Description"
+              },
+              "relatedGoal": {
+                "type": "string",
+                "title": "Supports goal"
+              },
+              "dueDate": {
+                "type": "string",
+                "title": "Due date",
+                "format": "date"
+              },
+              "status": {
+                "type": "string",
+                "title": "Status",
+                "oneOf": [
+                  {
+                    "const": "PLANNED",
+                    "title": "Planned"
+                  },
+                  {
+                    "const": "IN_PROGRESS",
+                    "title": "In progress"
+                  },
+                  {
+                    "const": "DONE",
+                    "title": "Done"
+                  }
+                ]
+              },
+              "outcome": {
+                "type": "string",
+                "title": "Outcome"
+              }
+            }
+          }
+        },
+        "ProgressReviews": {
+          "type": "array",
+          "title": "Progress reviews in this round",
+          "items": {
+            "type": "object",
+            "title": "Review",
+            "properties": {
+              "date": {
+                "type": "string",
+                "title": "Review date",
+                "format": "date"
+              },
+              "onTrack": {
+                "type": "boolean",
+                "title": "On track",
+                "default": true
+              },
+              "notes": {
+                "type": "string",
+                "title": "Notes"
+              },
+              "adjustments": {
+                "type": "string",
+                "title": "Adjustments to the plan"
+              },
+              "planCompleted": {
+                "type": "boolean",
+                "title": "The plan has been carried out: start the evaluation",
+                "default": false
+              }
+            }
+          }
+        },
+        "ProgressReview": {
+          "type": "object",
+          "title": "Progress review",
+          "properties": {
+            "date": {
+              "type": "string",
+              "title": "Review date",
+              "format": "date"
+            },
+            "onTrack": {
+              "type": "boolean",
+              "title": "On track",
+              "default": true
+            },
+            "notes": {
+              "type": "string",
+              "title": "Notes"
+            },
+            "adjustments": {
+              "type": "string",
+              "title": "Adjustments to the plan"
+            },
+            "planCompleted": {
+              "type": "boolean",
+              "title": "The plan has been carried out: start the evaluation",
+              "default": false
+            }
+          },
+          "required": [
+            "date",
+            "onTrack",
+            "planCompleted"
+          ]
+        }
+      }
+    },
+    "submitLabel": "Save review",
+    "uischema": {
+      "type": "VerticalLayout",
+      "elements": [
+        {
+          "type": "Group",
+          "label": "Development plan",
+          "elements": [
+            {
+              "type": "Control",
+              "scope": "#/properties/Plan/properties/period",
+              "options": {
+                "readonly": true
+              }
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/Plan/properties/goals",
+              "options": {
+                "showSortButtons": false,
+                "elementLabelProp": "title",
+                "detail": {
+                  "type": "VerticalLayout",
+                  "elements": [
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/title",
+                      "options": {
+                        "readonly": true
+                      }
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/type",
+                      "options": {
+                        "readonly": true
+                      }
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/description",
+                      "options": {
+                        "multi": true,
+                        "readonly": true
+                      }
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/successCriteria",
+                      "options": {
+                        "multi": true,
+                        "readonly": true
+                      }
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/targetDate",
+                      "options": {
+                        "readonly": true
+                      }
+                    }
+                  ]
+                },
+                "disableAdd": true,
+                "disableRemove": true,
+                "readonly": true
+              }
+            }
+          ]
+        },
+        {
+          "type": "Group",
+          "label": "Activities in this round",
+          "elements": [
+            {
+              "type": "Control",
+              "scope": "#/properties/Activities",
+              "label": false,
+              "options": {
+                "disableAdd": true,
+                "disableRemove": true,
+                "showSortButtons": false,
+                "elementLabelProp": "description",
+                "detail": {
+                  "type": "VerticalLayout",
+                  "elements": [
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/type",
+                      "options": {
+                        "readonly": true
+                      }
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/description",
+                      "options": {
+                        "multi": true,
+                        "readonly": true
+                      }
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/relatedGoal",
+                      "options": {
+                        "readonly": true
+                      }
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/dueDate",
+                      "options": {
+                        "readonly": true
+                      }
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/status",
+                      "options": {
+                        "readonly": true
+                      }
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/outcome",
+                      "options": {
+                        "multi": true,
+                        "readonly": true
+                      }
+                    }
+                  ]
+                },
+                "readonly": true
+              }
+            }
+          ]
+        },
+        {
+          "type": "Group",
+          "label": "Progress reviews in this round",
+          "elements": [
+            {
+              "type": "Control",
+              "scope": "#/properties/ProgressReviews",
+              "label": false,
+              "options": {
+                "disableAdd": true,
+                "disableRemove": true,
+                "showSortButtons": false,
+                "elementLabelProp": "date",
+                "detail": {
+                  "type": "VerticalLayout",
+                  "elements": [
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/date",
+                      "options": {
+                        "readonly": true
+                      }
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/onTrack",
+                      "options": {
+                        "readonly": true
+                      }
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/notes",
+                      "options": {
+                        "multi": true,
+                        "readonly": true
+                      }
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/adjustments",
+                      "options": {
+                        "multi": true,
+                        "readonly": true
+                      }
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/planCompleted",
+                      "options": {
+                        "readonly": true
+                      }
+                    }
+                  ]
+                },
+                "readonly": true
+              }
+            }
+          ]
+        },
+        {
+          "type": "Group",
+          "label": "Progress review",
+          "elements": [
+            {
+              "type": "Control",
+              "scope": "#/properties/ProgressReview/properties/date"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/ProgressReview/properties/onTrack"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/ProgressReview/properties/notes",
+              "options": {
+                "multi": true
+              }
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/ProgressReview/properties/adjustments",
+              "options": {
+                "multi": true
+              }
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/ProgressReview/properties/planCompleted"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "output": "ProgressReview"
+}]]></task-model>
+    </cafienne:implementation>
+</humanTask>

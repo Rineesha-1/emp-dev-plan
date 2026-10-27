@@ -1,0 +1,158 @@
+# This compose will work with docker 1.13.1+
+#
+# To run, call:
+#   $ docker-compose up
+#
+services:
+  # supporting containers
+  mailcatcher:
+    image: schickling/mailcatcher:latest
+    labels:
+      component: mta
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://mailcatcher:1080"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    networks:
+      - getting_started_network
+    expose:
+      - 1025
+      - 1080
+    ports:
+      - "1080:1080"
+    hostname: mailcatcher
+    container_name: mailcatcher
+
+  # The only identity provider of the stack: the devplan app, the case engine (incl. its Swagger UI) and the Case UI.
+  # Realm "devplan" (users, roles, clients) is imported from src/keycloak on first start.
+  # Tokens always carry issuer http://localhost:8280/realms/devplan; containers fetch keys via keycloak:8080.
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.7
+    command: ["start-dev", "--import-realm"]
+    networks:
+      - getting_started_network
+    ports:
+      - "8280:8080"
+    hostname: keycloak
+    container_name: devplan-keycloak # "keycloak" is taken by the HR-Portal project's container
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HOSTNAME: http://localhost:8280
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      KC_HTTP_ENABLED: "true"
+    volumes:
+      - ./src/keycloak:/opt/keycloak/data/import:ro
+
+  case-engine-db-postgres:
+    image: postgres:16
+    networks:
+      - getting_started_network
+    expose:
+      - 5432
+    ports:
+      - "5431:5432"
+    hostname: case-engine-db-postgres
+    container_name: case-engine-db-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./src/postgres-initdb:/docker-entrypoint-initdb.d
+      - case-engine-db-data:/var/lib/postgresql/data
+
+  case-designer:
+    image: cafienne/ide:latest
+    labels: 
+      component: case-designer
+    networks:
+      - getting_started_network
+    expose:
+      - 2081
+    ports:
+      - "2081:2081"
+    hostname: ide
+    container_name: case-designer
+    volumes:
+      - ./target/definitions:/usr/src/app/repository_deploy
+      - ./src/definitions:/usr/src/app/repository   
+    depends_on:
+      - case-engine
+
+  case-user-interface:
+    image: cafienne/cafienne-ui:0.7.3
+    labels:
+      component: case-user-interface
+    networks:
+      - getting_started_network
+    ports:
+      - "3317:80"
+    expose:
+      - 3317
+    hostname: case-user-interface
+    container_name: case-user-interface
+    environment:
+      OIDC_URI: ${OIDC_URI:-http://localhost:8280/realms/devplan}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-case-user-interface}
+      CAFIENNE_URI: ${CAFIENNE_URI:-http://localhost:2027}
+    depends_on:
+      - case-engine
+      - keycloak
+
+  case-engine:
+    image: cafienne/engine:1.1.35
+    labels:
+      component: case-engine    
+    networks: 
+      - getting_started_network
+    expose:
+      - 2027
+    ports:
+      - "2027:2027"
+    hostname: case-engine
+    container_name: case-engine
+    healthcheck:
+      test: ["CMD", "curl", "-sS", "-o", "/dev/null", "http://case-engine:2027/status"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    environment:
+      EVENT_DB_URL: ${EVENT_DB_URL:-jdbc:postgresql://case-engine-db-postgres:5432/case-engine-eventstore?reWriteBatchedInserts=true}    
+      EVENT_DB_PROFILE: ${EVENT_DB_PROFILE:-slick.jdbc.PostgresProfile$}
+      EVENT_DB_DRIVER: ${EVENT_DB_DRIVER:-org.postgresql.Driver}
+      EVENT_DB_USER: ${EVENT_DB_USER:-postgres}
+      EVENT_DB_PASSWORD: ${EVENT_DB_PASSWORD:-postgres}
+      QUERY_DB_PROFILE: ${QUERY_DB_PROFILE:-slick.jdbc.PostgresProfile$}
+      QUERY_DB_DRIVER: ${QUERY_DB_DRIVER:-org.postgresql.Driver}
+      QUERY_DB_USER: ${QUERY_DB_USER:-postgres}
+      QUERY_DB_PASSWORD: ${QUERY_DB_PASSWORD:-postgres}
+      QUERY_DB_URL: ${QUERY_DB_URL:-jdbc:postgresql://case-engine-db-postgres:5432/case-engine-query?reWriteBatchedInserts=true}
+      CAFIENNE_OIDC_CONNECT_URL: http://keycloak:8080/realms/devplan/.well-known/openid-configuration
+      CAFIENNE_OIDC_TOKEN_URL: http://keycloak:8080/realms/devplan/protocol/openid-connect/token
+      CAFIENNE_OIDC_KEY_URL: http://keycloak:8080/realms/devplan/protocol/openid-connect/certs
+      CAFIENNE_OIDC_AUTHORIZATION_URL: http://localhost:8280/realms/devplan/protocol/openid-connect/auth
+      CAFIENNE_OIDC_ISSUER: http://localhost:8280/realms/devplan
+      CAFIENNE_PLATFORM_DEFAULT_TENANT: devplan
+    volumes:
+      - ./run/cafienne/journal:/opt/cafienne/journal
+      - ./run/cafienne/logs:/opt/cafienne/logs
+      - ./target/definitions:/opt/cafienne/definitions
+      - ./src/conf:/opt/cafienne/conf
+      - ./src/ext:/opt/cafienne/lib_ext
+      - ./src/bootstrap:/opt/cafienne/bootstrap
+    depends_on:
+      - case-engine-db-postgres
+      - keycloak
+      - mailcatcher
+
+  # The Development plan app runs from its own compose file (../devplan-app/docker-compose.yml) and joins the
+  # network below to reach keycloak, case-engine and case-engine-db-postgres.
+
+volumes:
+  case-engine-db-data:
+    driver: local
+networks:
+  getting_started_network:
+    name: casefabric_network # fixed name, so other compose files (devplan-app) can join it as an external network
+    driver: bridge

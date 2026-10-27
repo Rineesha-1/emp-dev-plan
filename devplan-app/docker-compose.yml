@@ -1,0 +1,69 @@
+# Development plan app: two containers.
+#   frontend  nginx with the React/JSONForms build (frontend/Dockerfile), on http://localhost:8090;
+#             forwards /api to the backend, so the browser uses a single origin.
+#   backend   Spring Boot API (backend/Dockerfile), a thin layer over the case engine.
+#
+# The backend needs the CaseFabric stack (Keycloak, case engine, Postgres) from ../getting-started and joins that
+# stack's network to reach those services by name. Start that stack first:
+#
+#   cd ../getting-started && docker compose up -d
+#   cd ../devplan-app     && docker compose up -d --build
+#
+# Every setting can be overridden from the shell or from a .env file next to this file.
+services:
+  backend:
+    build: ./backend
+    image: devplan-backend:latest
+    container_name: devplan-backend
+    hostname: backend
+    environment:
+      # Employee directory, schema "devplan" in the CaseFabric Postgres (created by Flyway on start).
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:postgresql://case-engine-db-postgres:5432/postgres}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-postgres}
+      # Keycloak as reached from this container; tokens carry the public issuer the browser uses.
+      DEVPLAN_KEYCLOAK_INTERNAL_URL: ${DEVPLAN_KEYCLOAK_INTERNAL_URL:-http://keycloak:8080/realms/devplan}
+      DEVPLAN_KEYCLOAK_ISSUER: ${DEVPLAN_KEYCLOAK_ISSUER:-http://localhost:8280/realms/devplan}
+      DEVPLAN_KEYCLOAK_PUBLIC_URL: ${DEVPLAN_KEYCLOAK_PUBLIC_URL:-http://localhost:8280}
+      DEVPLAN_BACKEND_CLIENT_SECRET: ${DEVPLAN_BACKEND_CLIENT_SECRET:-devplan-backend-secret}
+      DEVPLAN_ENGINE_URL: ${DEVPLAN_ENGINE_URL:-http://case-engine:2027}
+    # Not published on the host: the browser reaches it through the frontend. Uncomment to call the API directly.
+    # ports:
+    #   - "8091:8080"
+    # The CaseFabric services live in another compose project, so depends_on cannot wait for them;
+    # the backend restarts until Postgres, Keycloak and the engine answer.
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8080/api/config"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks:
+      - devplan
+      - casefabric
+
+  frontend:
+    build: ./frontend
+    image: devplan-frontend:latest
+    container_name: devplan-frontend
+    hostname: frontend
+    ports:
+      - "${DEVPLAN_PORT:-8090}:80" # must match the redirect URI of Keycloak client devplan-web
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    networks:
+      - devplan
+
+networks:
+  devplan: {} # frontend <-> backend
+  casefabric:
+    external: true
+    name: casefabric_network # created by ../getting-started/docker-compose.yml

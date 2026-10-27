@@ -1,0 +1,113 @@
+{
+  "realm": "devplan",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "accessTokenLifespan": 900,
+  "roles": {
+    "realm": [
+      { "name": "employee", "description": "Works on their own development plan" },
+      { "name": "manager", "description": "Approves, reviews and evaluates development plans" },
+      { "name": "hr", "description": "HR: sees and starts development cases for all employees" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "devplan-web",
+      "name": "Development plan app",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": ["http://localhost:8090/*"],
+      "webOrigins": ["http://localhost:8090"],
+      "attributes": { "pkce.code.challenge.method": "S256", "post.logout.redirect.uris": "http://localhost:8090/*" }
+    },
+    {
+      "clientId": "case-user-interface",
+      "name": "CaseFabric Case UI",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "redirectUris": ["http://localhost:3317/*"],
+      "webOrigins": ["http://localhost:3317"],
+      "attributes": { "post.logout.redirect.uris": "http://localhost:3317/*" }
+    },
+    {
+      "clientId": "swagger-ui",
+      "name": "Case engine Swagger UI (Authorize button at http://localhost:2027)",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": true,
+      "redirectUris": ["http://localhost:2027/*"],
+      "webOrigins": ["http://localhost:2027"]
+    },
+    {
+      "clientId": "devplan-backend",
+      "name": "Development plan backend (registers users in the case engine tenant)",
+      "publicClient": false,
+      "secret": "devplan-backend-secret",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true
+    }
+  ],
+  "users": [
+    {
+      "id": "d0000000-0000-4000-8000-000000000001",
+      "username": "shanmuk_emp", "email": "shanmuk_emp@devplan.local", "emailVerified": true,
+      "firstName": "Shanmuk", "lastName": "Employee", "enabled": true,
+      "credentials": [{ "type": "password", "value": "shanmuk_emp", "temporary": false }],
+      "realmRoles": ["employee"]
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000000002",
+      "username": "kaustubh_emp", "email": "kaustubh_emp@devplan.local", "emailVerified": true,
+      "firstName": "Kaustubh", "lastName": "Employee", "enabled": true,
+      "credentials": [{ "type": "password", "value": "kaustubh_emp", "temporary": false }],
+      "realmRoles": ["employee"]
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000000003",
+      "username": "rahul_mngr", "email": "rahul_mngr@devplan.local", "emailVerified": true,
+      "firstName": "Rahul", "lastName": "Manager", "enabled": true,
+      "credentials": [{ "type": "password", "value": "rahul_mngr", "temporary": false }],
+      "realmRoles": ["manager"]
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000000004",
+      "username": "sridhar_hr", "email": "sridhar_hr@devplan.local", "emailVerified": true,
+      "firstName": "Sridhar", "lastName": "HR", "enabled": true,
+      "credentials": [{ "type": "password", "value": "sridhar_hr", "temporary": false }],
+      "realmRoles": ["hr"]
+    },
+    {
+      "id": "CgVhZG1pbhIFbG9jYWw",
+      "username": "admin", "email": "admin@example.com", "emailVerified": true,
+      "firstName": "Platform", "lastName": "Admin", "enabled": true,
+      "credentials": [{ "type": "password", "value": "admin", "temporary": false }]
+    },
+    {
+      "id": "CgRsYW5hEgVsb2NhbA",
+      "username": "lana", "email": "lana@example.com", "emailVerified": true,
+      "firstName": "Lana", "lastName": "World", "enabled": true,
+      "credentials": [{ "type": "password", "value": "lana", "temporary": false }]
+    },
+    {
+      "id": "CgRzdXp5EgVsb2NhbA",
+      "username": "suzy", "email": "suzy@example.com", "emailVerified": true,
+      "firstName": "Suzy", "lastName": "World", "enabled": true,
+      "credentials": [{ "type": "password", "value": "suzy", "temporary": false }]
+    },
+    {
+      "id": "CgRoYW5rEgVsb2NhbA",
+      "username": "hank", "email": "hank@example.com", "emailVerified": true,
+      "firstName": "Hank", "lastName": "World", "enabled": true,
+      "credentials": [{ "type": "password", "value": "hank", "temporary": false }]
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000000005",
+      "username": "service-account-devplan-backend", "enabled": true,
+      "serviceAccountClientId": "devplan-backend"
+    }
+  ]
+}

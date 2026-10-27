@@ -1,0 +1,32 @@
+# devplan-app build output
+devplan-app/backend/target/
+devplan-app/frontend/node_modules/
+devplan-app/frontend/dist/
+
+# Kept on purpose (do not add a generic "target/" or "*.jar" rule):
+# - getting-started/target/definitions/  deployed case definitions, mounted into the case engine
+# - getting-started/src/ext/case-plugins.jar  engine plugin
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Environment overrides with local secrets
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDEs
+.idea/
+*.iml
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini

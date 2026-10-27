@@ -1,0 +1,35 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5431/postgres}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    hikari:
+      schema: devplan
+  flyway:
+    schemas: devplan
+    default-schema: devplan
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${devplan.keycloak.internal-url}/protocol/openid-connect/certs
+
+devplan:
+  keycloak:
+    # Reached from this app (inside docker: keycloak:8080); tokens always carry the public issuer.
+    internal-url: ${DEVPLAN_KEYCLOAK_INTERNAL_URL:http://localhost:8280/realms/devplan}
+    issuer: ${DEVPLAN_KEYCLOAK_ISSUER:http://localhost:8280/realms/devplan}
+    # What the browser uses to log in.
+    public-url: ${DEVPLAN_KEYCLOAK_PUBLIC_URL:http://localhost:8280}
+    realm: devplan
+    web-client-id: devplan-web
+    # Service account that owns the engine tenant; only used to register new users in the tenant.
+    backend-client-id: devplan-backend
+    backend-client-secret: ${DEVPLAN_BACKEND_CLIENT_SECRET:devplan-backend-secret}
+  engine:
+    url: ${DEVPLAN_ENGINE_URL:http://localhost:2027}
+    tenant: devplan
+    definition: development.xml

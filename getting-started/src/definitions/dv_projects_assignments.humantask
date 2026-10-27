@@ -1,0 +1,453 @@
+<humanTask xmlns="http://www.omg.org/spec/CMMN/20151109/MODEL" xmlns:cafienne="org.cafienne">
+    <cafienne:implementation name="ProjectsAssignments" class="org.cafienne.cmmn.definition.task.WorkflowTaskDefinition">
+        <documentation textFormat="text/plain">
+            <text><![CDATA[Projects and assignments. Owner: Employee. Adds a PROJECT activity to Activities.]]></text>
+        </documentation>
+        <input id="i_Plan__projects_assignments" name="Plan"/>
+        <output id="o_Activity__projects_assignments" name="Activity"/>
+        <task-model><![CDATA[{
+  "schema": {
+    "title": "Projects and assignments",
+    "description": "Describe the project or assignment, the goal it supports and its status.",
+    "type": "object",
+    "required": [
+      "Activity"
+    ],
+    "properties": {
+      "Plan": {
+        "type": "object",
+        "title": "Development plan",
+        "properties": {
+          "period": {
+            "type": "string",
+            "title": "Plan period"
+          },
+          "goals": {
+            "type": "array",
+            "title": "Goals",
+            "items": {
+              "type": "object",
+              "title": "Goal",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "title": "Goal"
+                },
+                "type": {
+                  "type": "string",
+                  "title": "Type",
+                  "enum": [
+                    "SKILL",
+                    "KNOWLEDGE",
+                    "BEHAVIOUR",
+                    "CAREER"
+                  ],
+                  "enumNames": [
+                    "Skill",
+                    "Knowledge",
+                    "Behaviour",
+                    "Career"
+                  ]
+                },
+                "description": {
+                  "type": "string",
+                  "title": "Description"
+                },
+                "successCriteria": {
+                  "type": "string",
+                  "title": "How we know it is achieved"
+                },
+                "targetDate": {
+                  "type": "string",
+                  "title": "Target date",
+                  "format": "date"
+                }
+              },
+              "required": [
+                "title",
+                "type",
+                "successCriteria",
+                "targetDate"
+              ]
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "period",
+          "goals"
+        ]
+      },
+      "Activity": {
+        "type": "object",
+        "title": "Activity",
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type",
+            "enum": [
+              "PROJECT"
+            ],
+            "enumNames": [
+              "Project"
+            ],
+            "default": "PROJECT"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "relatedGoal": {
+            "type": "string",
+            "title": "Supports goal"
+          },
+          "dueDate": {
+            "type": "string",
+            "title": "Due date",
+            "format": "date"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "enum": [
+              "PLANNED",
+              "IN_PROGRESS",
+              "DONE"
+            ],
+            "enumNames": [
+              "Planned",
+              "In progress",
+              "Done"
+            ]
+          },
+          "outcome": {
+            "type": "string",
+            "title": "Outcome"
+          }
+        },
+        "required": [
+          "type",
+          "description",
+          "status"
+        ]
+      }
+    }
+  },
+  "uiSchema": {
+    "Plan": {
+      "ui:order": [
+        "period",
+        "goals"
+      ],
+      "goals": {
+        "items": {
+          "ui:order": [
+            "title",
+            "type",
+            "description",
+            "successCriteria",
+            "targetDate"
+          ],
+          "description": {
+            "ui:widget": "textarea",
+            "ui:options": {
+              "rows": 3
+            }
+          },
+          "successCriteria": {
+            "ui:widget": "textarea",
+            "ui:options": {
+              "rows": 3
+            }
+          }
+        },
+        "ui:options": {
+          "addable": false,
+          "removable": false,
+          "orderable": false
+        },
+        "ui:readonly": true
+      },
+      "ui:readonly": true
+    },
+    "Activity": {
+      "ui:order": [
+        "type",
+        "description",
+        "relatedGoal",
+        "dueDate",
+        "status",
+        "outcome"
+      ],
+      "description": {
+        "ui:widget": "textarea",
+        "ui:options": {
+          "rows": 3
+        }
+      },
+      "outcome": {
+        "ui:widget": "textarea",
+        "ui:options": {
+          "rows": 3
+        }
+      }
+    },
+    "ui:order": [
+      "Plan",
+      "Activity"
+    ]
+  },
+  "jsonforms": {
+    "schema": {
+      "title": "Projects and assignments",
+      "description": "Describe the project or assignment, the goal it supports and its status.",
+      "type": "object",
+      "required": [
+        "Activity"
+      ],
+      "properties": {
+        "Plan": {
+          "type": "object",
+          "title": "Development plan",
+          "properties": {
+            "period": {
+              "type": "string",
+              "title": "Plan period"
+            },
+            "goals": {
+              "type": "array",
+              "title": "Goals",
+              "items": {
+                "type": "object",
+                "title": "Goal",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "title": "Goal"
+                  },
+                  "type": {
+                    "type": "string",
+                    "title": "Type",
+                    "oneOf": [
+                      {
+                        "const": "SKILL",
+                        "title": "Skill"
+                      },
+                      {
+                        "const": "KNOWLEDGE",
+                        "title": "Knowledge"
+                      },
+                      {
+                        "const": "BEHAVIOUR",
+                        "title": "Behaviour"
+                      },
+                      {
+                        "const": "CAREER",
+                        "title": "Career"
+                      }
+                    ]
+                  },
+                  "description": {
+                    "type": "string",
+                    "title": "Description"
+                  },
+                  "successCriteria": {
+                    "type": "string",
+                    "title": "How we know it is achieved"
+                  },
+                  "targetDate": {
+                    "type": "string",
+                    "title": "Target date",
+                    "format": "date"
+                  }
+                },
+                "required": [
+                  "title",
+                  "type",
+                  "successCriteria",
+                  "targetDate"
+                ]
+              },
+              "minItems": 1
+            }
+          },
+          "required": [
+            "period",
+            "goals"
+          ]
+        },
+        "Activity": {
+          "type": "object",
+          "title": "Activity",
+          "properties": {
+            "type": {
+              "type": "string",
+              "title": "Type",
+              "oneOf": [
+                {
+                  "const": "PROJECT",
+                  "title": "Project"
+                }
+              ],
+              "default": "PROJECT"
+            },
+            "description": {
+              "type": "string",
+              "title": "Description"
+            },
+            "relatedGoal": {
+              "type": "string",
+              "title": "Supports goal"
+            },
+            "dueDate": {
+              "type": "string",
+              "title": "Due date",
+              "format": "date"
+            },
+            "status": {
+              "type": "string",
+              "title": "Status",
+              "oneOf": [
+                {
+                  "const": "PLANNED",
+                  "title": "Planned"
+                },
+                {
+                  "const": "IN_PROGRESS",
+                  "title": "In progress"
+                },
+                {
+                  "const": "DONE",
+                  "title": "Done"
+                }
+              ]
+            },
+            "outcome": {
+              "type": "string",
+              "title": "Outcome"
+            }
+          },
+          "required": [
+            "type",
+            "description",
+            "status"
+          ]
+        }
+      }
+    },
+    "submitLabel": "Save activity",
+    "uischema": {
+      "type": "VerticalLayout",
+      "elements": [
+        {
+          "type": "Group",
+          "label": "Development plan",
+          "elements": [
+            {
+              "type": "Control",
+              "scope": "#/properties/Plan/properties/period",
+              "options": {
+                "readonly": true
+              }
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/Plan/properties/goals",
+              "options": {
+                "showSortButtons": false,
+                "elementLabelProp": "title",
+                "detail": {
+                  "type": "VerticalLayout",
+                  "elements": [
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/title",
+                      "options": {
+                        "readonly": true
+                      }
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/type",
+                      "options": {
+                        "readonly": true
+                      }
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/description",
+                      "options": {
+                        "multi": true,
+                        "readonly": true
+                      }
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/successCriteria",
+                      "options": {
+                        "multi": true,
+                        "readonly": true
+                      }
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/targetDate",
+                      "options": {
+                        "readonly": true
+                      }
+                    }
+                  ]
+                },
+                "disableAdd": true,
+                "disableRemove": true,
+                "readonly": true
+              }
+            }
+          ]
+        },
+        {
+          "type": "Group",
+          "label": "Activity",
+          "elements": [
+            {
+              "type": "Control",
+              "scope": "#/properties/Activity/properties/type",
+              "options": {
+                "readonly": true
+              }
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/Activity/properties/description",
+              "options": {
+                "multi": true
+              }
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/Activity/properties/relatedGoal"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/Activity/properties/dueDate"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/Activity/properties/status"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/Activity/properties/outcome",
+              "options": {
+                "multi": true
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "output": "Activity"
+}]]></task-model>
+    </cafienne:implementation>
+</humanTask>

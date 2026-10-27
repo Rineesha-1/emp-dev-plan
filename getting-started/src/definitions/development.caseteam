@@ -1,0 +1,8 @@
+<caseteam xmlns="http://www.omg.org/spec/CMMN/20151109/MODEL" xmlns:cafienne="org.cafienne" id="development.caseteam" name="development">
+    <documentation textFormat="text/plain">
+        <text><![CDATA[Case team of the development plan case.]]></text>
+    </documentation>
+    <role id="cr_dv_Employee" name="Employee"/>
+    <role id="cr_dv_Manager" name="Manager"/>
+    <role id="cr_dv_HR" name="HR"/>
+</caseteam>

@@ -1,0 +1,375 @@
+<humanTask xmlns="http://www.omg.org/spec/CMMN/20151109/MODEL" xmlns:cafienne="org.cafienne">
+    <cafienne:implementation name="RevisePlan" class="org.cafienne.cmmn.definition.task.WorkflowTaskDefinition">
+        <documentation textFormat="text/plain">
+            <text><![CDATA[Revise plan. Owner: Employee. ]]></text>
+        </documentation>
+        <input id="i_Approval__revise_plan" name="Approval"/>
+        <input id="i_Plan__revise_plan" name="Plan"/>
+        <output id="o_Plan__revise_plan" name="Plan"/>
+        <task-model><![CDATA[{
+  "schema": {
+    "title": "Revise plan",
+    "description": "Change the plan based on your manager's comments, then send it for approval again.",
+    "type": "object",
+    "required": [
+      "Plan"
+    ],
+    "properties": {
+      "Approval": {
+        "type": "object",
+        "title": "Manager's decision",
+        "properties": {
+          "decision": {
+            "type": "string",
+            "title": "Decision",
+            "enum": [
+              "APPROVED",
+              "REJECTED"
+            ],
+            "enumNames": [
+              "Approved",
+              "Rejected"
+            ]
+          },
+          "comments": {
+            "type": "string",
+            "title": "Comments"
+          }
+        },
+        "required": [
+          "decision"
+        ],
+        "if": {
+          "properties": {
+            "decision": {
+              "const": "REJECTED"
+            }
+          },
+          "required": [
+            "decision"
+          ]
+        },
+        "then": {
+          "required": [
+            "comments"
+          ]
+        }
+      },
+      "Plan": {
+        "type": "object",
+        "title": "Development plan",
+        "properties": {
+          "period": {
+            "type": "string",
+            "title": "Plan period"
+          },
+          "goals": {
+            "type": "array",
+            "title": "Goals",
+            "items": {
+              "type": "object",
+              "title": "Goal",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "title": "Goal"
+                },
+                "type": {
+                  "type": "string",
+                  "title": "Type",
+                  "enum": [
+                    "SKILL",
+                    "KNOWLEDGE",
+                    "BEHAVIOUR",
+                    "CAREER"
+                  ],
+                  "enumNames": [
+                    "Skill",
+                    "Knowledge",
+                    "Behaviour",
+                    "Career"
+                  ]
+                },
+                "description": {
+                  "type": "string",
+                  "title": "Description"
+                },
+                "successCriteria": {
+                  "type": "string",
+                  "title": "How we know it is achieved"
+                },
+                "targetDate": {
+                  "type": "string",
+                  "title": "Target date",
+                  "format": "date"
+                }
+              },
+              "required": [
+                "title",
+                "type",
+                "successCriteria",
+                "targetDate"
+              ]
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "period",
+          "goals"
+        ]
+      }
+    }
+  },
+  "uiSchema": {
+    "Approval": {
+      "ui:order": [
+        "decision",
+        "comments"
+      ],
+      "comments": {
+        "ui:widget": "textarea",
+        "ui:options": {
+          "rows": 3
+        }
+      },
+      "ui:readonly": true
+    },
+    "Plan": {
+      "ui:order": [
+        "period",
+        "goals"
+      ],
+      "goals": {
+        "items": {
+          "ui:order": [
+            "title",
+            "type",
+            "description",
+            "successCriteria",
+            "targetDate"
+          ],
+          "description": {
+            "ui:widget": "textarea",
+            "ui:options": {
+              "rows": 3
+            }
+          },
+          "successCriteria": {
+            "ui:widget": "textarea",
+            "ui:options": {
+              "rows": 3
+            }
+          }
+        }
+      }
+    },
+    "ui:order": [
+      "Approval",
+      "Plan"
+    ]
+  },
+  "jsonforms": {
+    "schema": {
+      "title": "Revise plan",
+      "description": "Change the plan based on your manager's comments, then send it for approval again.",
+      "type": "object",
+      "required": [
+        "Plan"
+      ],
+      "properties": {
+        "Approval": {
+          "type": "object",
+          "title": "Manager's decision",
+          "properties": {
+            "decision": {
+              "type": "string",
+              "title": "Decision",
+              "oneOf": [
+                {
+                  "const": "APPROVED",
+                  "title": "Approved"
+                },
+                {
+                  "const": "REJECTED",
+                  "title": "Rejected"
+                }
+              ]
+            },
+            "comments": {
+              "type": "string",
+              "title": "Comments"
+            }
+          },
+          "required": [
+            "decision"
+          ],
+          "if": {
+            "properties": {
+              "decision": {
+                "const": "REJECTED"
+              }
+            },
+            "required": [
+              "decision"
+            ]
+          },
+          "then": {
+            "required": [
+              "comments"
+            ]
+          }
+        },
+        "Plan": {
+          "type": "object",
+          "title": "Development plan",
+          "properties": {
+            "period": {
+              "type": "string",
+              "title": "Plan period"
+            },
+            "goals": {
+              "type": "array",
+              "title": "Goals",
+              "items": {
+                "type": "object",
+                "title": "Goal",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "title": "Goal"
+                  },
+                  "type": {
+                    "type": "string",
+                    "title": "Type",
+                    "oneOf": [
+                      {
+                        "const": "SKILL",
+                        "title": "Skill"
+                      },
+                      {
+                        "const": "KNOWLEDGE",
+                        "title": "Knowledge"
+                      },
+                      {
+                        "const": "BEHAVIOUR",
+                        "title": "Behaviour"
+                      },
+                      {
+                        "const": "CAREER",
+                        "title": "Career"
+                      }
+                    ]
+                  },
+                  "description": {
+                    "type": "string",
+                    "title": "Description"
+                  },
+                  "successCriteria": {
+                    "type": "string",
+                    "title": "How we know it is achieved"
+                  },
+                  "targetDate": {
+                    "type": "string",
+                    "title": "Target date",
+                    "format": "date"
+                  }
+                },
+                "required": [
+                  "title",
+                  "type",
+                  "successCriteria",
+                  "targetDate"
+                ]
+              },
+              "minItems": 1
+            }
+          },
+          "required": [
+            "period",
+            "goals"
+          ]
+        }
+      }
+    },
+    "submitLabel": "Send for approval",
+    "uischema": {
+      "type": "VerticalLayout",
+      "elements": [
+        {
+          "type": "Group",
+          "label": "Manager's decision",
+          "elements": [
+            {
+              "type": "Control",
+              "scope": "#/properties/Approval/properties/decision",
+              "options": {
+                "readonly": true
+              }
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/Approval/properties/comments",
+              "options": {
+                "multi": true,
+                "readonly": true
+              }
+            }
+          ]
+        },
+        {
+          "type": "Group",
+          "label": "Development plan",
+          "elements": [
+            {
+              "type": "Control",
+              "scope": "#/properties/Plan/properties/period"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/Plan/properties/goals",
+              "options": {
+                "showSortButtons": false,
+                "elementLabelProp": "title",
+                "detail": {
+                  "type": "VerticalLayout",
+                  "elements": [
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/title"
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/type"
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/description",
+                      "options": {
+                        "multi": true
+                      }
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/successCriteria",
+                      "options": {
+                        "multi": true
+                      }
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/targetDate"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "output": "Plan"
+}]]></task-model>
+    </cafienne:implementation>
+</humanTask>

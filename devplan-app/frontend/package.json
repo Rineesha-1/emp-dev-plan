@@ -1,0 +1,28 @@
+{
+  "name": "devplan-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@emotion/react": "11.13.5",
+    "@emotion/styled": "11.13.5",
+    "@jsonforms/core": "3.5.1",
+    "@jsonforms/material-renderers": "3.5.1",
+    "@jsonforms/react": "3.5.1",
+    "@mui/icons-material": "6.1.10",
+    "@mui/material": "6.1.10",
+    "@mui/x-date-pickers": "7.23.1",
+    "dayjs": "1.11.13",
+    "keycloak-js": "26.0.7",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "4.3.4",
+    "vite": "5.4.11"
+  }
+}
