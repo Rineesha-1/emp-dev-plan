@@ -25,8 +25,12 @@ services:
       DEVPLAN_KEYCLOAK_INTERNAL_URL: ${DEVPLAN_KEYCLOAK_INTERNAL_URL:-http://keycloak:8080/realms/devplan}
       DEVPLAN_KEYCLOAK_ISSUER: ${DEVPLAN_KEYCLOAK_ISSUER:-http://localhost:8280/realms/devplan}
       DEVPLAN_KEYCLOAK_PUBLIC_URL: ${DEVPLAN_KEYCLOAK_PUBLIC_URL:-http://localhost:8280}
+      # Keycloak's Admin REST API, used only to create employee accounts (Add Employee feature).
+      DEVPLAN_KEYCLOAK_ADMIN_URL: ${DEVPLAN_KEYCLOAK_ADMIN_URL:-http://keycloak:8080/admin/realms/devplan}
       DEVPLAN_BACKEND_CLIENT_SECRET: ${DEVPLAN_BACKEND_CLIENT_SECRET:-devplan-backend-secret}
       DEVPLAN_ENGINE_URL: ${DEVPLAN_ENGINE_URL:-http://case-engine:2027}
+      # Where Keycloak sends a new employee back after they set their password.
+      DEVPLAN_APP_BASE_URL: ${DEVPLAN_APP_BASE_URL:-http://localhost:8090}
     # Not published on the host: the browser reaches it through the frontend. Uncomment to call the API directly.
     # ports:
     #   - "8091:8080"
