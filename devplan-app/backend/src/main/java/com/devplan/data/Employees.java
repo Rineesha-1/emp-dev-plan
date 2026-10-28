@@ -2,6 +2,7 @@ package com.devplan.data;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
@@ -29,6 +30,15 @@ public class Employees {
 
     public Optional<Employee> byUsername(String username) {
         return db.sql(SELECT + "WHERE username = ?").param(username).query(Employee.class).optional();
+    }
+
+    /** Adds a new employee, with the real Keycloak user id already known. */
+    public Employee insert(String name, String jobTitle, String username, String userId, String managerId) {
+        String employeeId = UUID.randomUUID().toString();
+        db.sql("INSERT INTO employee (employee_id, name, job_title, username, user_id, manager_id) "
+                        + "VALUES (?, ?, ?, ?, ?, ?)")
+                .params(employeeId, name, jobTitle, username, userId, managerId).update();
+        return new Employee(employeeId, name, jobTitle, username, userId, managerId);
     }
 
     /** HR sees everyone, a manager their direct reports, an employee themselves. */

@@ -5,6 +5,15 @@
   "registrationAllowed": false,
   "loginWithEmailAllowed": true,
   "accessTokenLifespan": 900,
+  "smtpServer": {
+    "host": "mailcatcher",
+    "port": "1025",
+    "from": "devplan@local.test",
+    "fromDisplayName": "Devplan",
+    "auth": "false",
+    "ssl": "false",
+    "starttls": "false"
+  },
   "roles": {
     "realm": [
       { "name": "employee", "description": "Works on their own development plan" },
@@ -43,7 +52,7 @@
     },
     {
       "clientId": "devplan-backend",
-      "name": "Development plan backend (registers users in the case engine tenant)",
+      "name": "Development plan backend (registers users in the case engine tenant, and creates employee accounts)",
       "publicClient": false,
       "secret": "devplan-backend-secret",
       "standardFlowEnabled": false,
@@ -107,7 +116,8 @@
     {
       "id": "d0000000-0000-4000-8000-000000000005",
       "username": "service-account-devplan-backend", "enabled": true,
-      "serviceAccountClientId": "devplan-backend"
+      "serviceAccountClientId": "devplan-backend",
+      "clientRoles": { "realm-management": ["manage-users", "view-realm"] }
     }
   ]
 }

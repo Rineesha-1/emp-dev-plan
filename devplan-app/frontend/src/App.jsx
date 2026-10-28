@@ -85,6 +85,7 @@ export default function App({ keycloak }) {
   const [page, id] = useRoute();
   const [me] = useLoad('/me');
   const roles = caseRolesOf(me);
+  const isHr = me && me.roles.includes('hr');
   return (
     <>
       <header className="topbar">
@@ -92,6 +93,7 @@ export default function App({ keycloak }) {
         <nav>
           <a href="#/tasks" className={page === 'tasks' ? 'active' : ''}>My tasks</a>
           <a href="#/cases" className={page === 'cases' ? 'active' : ''}>Plans</a>
+          {isHr && <a href="#/employees" className={page === 'employees' ? 'active' : ''}>Employees</a>}
         </nav>
         <span className="who">
           {me && <span>{me.name}<small>{roles.join(', ')}</small></span>}
@@ -103,6 +105,7 @@ export default function App({ keycloak }) {
         {page === 'tasks' && id && <TaskForm taskId={id} />}
         {page === 'cases' && !id && <CaseList me={me} />}
         {page === 'cases' && id && <CaseDetail caseId={id} roles={roles} />}
+        {page === 'employees' && isHr && <EmployeeAdmin />}
       </main>
     </>
   );
@@ -287,6 +290,81 @@ function CaseList({ me }) {
                   <span className="phase-name">{c.phase === 'waiting' && c.round === 0 ? 'Not started yet' : PHASE_LABEL[c.phase] || c.state}</span>
                 </span>
               </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+const EMPTY_EMPLOYEE = { name: '', jobTitle: '', username: '', email: '', role: '', managerId: '' };
+
+/** HR-only: creates a Keycloak account and the employee record. Keycloak emails the person a link to set their
+ * own password — nobody here ever sees or handles one. */
+function EmployeeAdmin() {
+  const [employees, error, reload] = useLoad('/employees');
+  const [form, setForm] = useState(EMPTY_EMPLOYEE);
+  const [busy, setBusy] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
+  const [sentTo, setSentTo] = useState(null);
+  const field = (name) => ({
+    value: form[name],
+    onChange: (e) => { setSentTo(null); setForm({ ...form, [name]: e.target.value }); },
+  });
+  const canSubmit = form.name && form.username && form.email && form.role;
+
+  const submit = (event) => {
+    event.preventDefault();
+    setBusy(true);
+    setSubmitError(null);
+    api('POST', '/employees', { ...form, managerId: form.managerId || null })
+      .then((result) => { setSentTo(result.email); setForm(EMPTY_EMPLOYEE); reload(); })
+      .catch((e) => setSubmitError(e.message))
+      .finally(() => setBusy(false));
+  };
+
+  return (
+    <section>
+      <div className="page-head">
+        <h1>Employees</h1>
+        <button className="quiet" onClick={reload}>Refresh</button>
+      </div>
+      <form className="start" onSubmit={submit}>
+        <label htmlFor="emp-name">Name</label>
+        <input id="emp-name" {...field('name')} required />
+        <label htmlFor="emp-title">Job title</label>
+        <input id="emp-title" {...field('jobTitle')} />
+        <label htmlFor="emp-username">Username</label>
+        <input id="emp-username" {...field('username')} required />
+        <label htmlFor="emp-email">Email</label>
+        <input id="emp-email" type="email" {...field('email')} required />
+        <label htmlFor="emp-role">Role</label>
+        <select id="emp-role" {...field('role')}>
+          <option value="">Choose a role</option>
+          <option value="employee">Employee</option>
+          <option value="manager">Manager</option>
+          <option value="hr">HR</option>
+        </select>
+        <label htmlFor="emp-manager">Manager</label>
+        <select id="emp-manager" {...field('managerId')}>
+          <option value="">No manager</option>
+          {(employees || []).map((e) => <option key={e.employeeId} value={e.employeeId}>{e.name}</option>)}
+        </select>
+        <button className="primary" type="submit" disabled={!canSubmit || busy}>{busy ? 'Adding…' : 'Add employee'}</button>
+        <Problem message={submitError} />
+      </form>
+      {sentTo && <p className="flash" role="status">Invite email sent to {sentTo}. They'll set their own password from the link in it.</p>}
+      <Problem message={error} />
+      {!employees && !error && <p className="muted">Loading employees…</p>}
+      {employees && employees.length > 0 && (
+        <ul className="rows">
+          {employees.map((e) => (
+            <li key={e.employeeId} className="row-link">
+              <span className="row-main">
+                <strong>{e.name}</strong>
+                <span className="muted">{e.username}{e.jobTitle ? ` · ${e.jobTitle}` : ''}</span>
+              </span>
             </li>
           ))}
         </ul>
