@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Development case — diagram</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600&family=Geist+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;background:#f5f5f5;}
+  .wrap{max-width:1400px;margin:0 auto;padding:16px;}
+  svg{display:block;width:100%;height:auto;}
+</style>
+</head>
+<body>
+<div class="wrap">
+<!-- Source: getting-started/src/definitions/development.case (+ development.type, development.caseteam, dv_*.humantask) -->
+<svg viewBox="0 0 1200 1262" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Development case CMMN diagram">
+<rect width="100%" height="100%" fill="#f5f5f5"/>
+
+<!-- ===== Case plan model ===== -->
+<path d="M24,48 L24,26 Q24,18 32,18 L248,18 Q256,18 258,26 L264,48" fill="#ffffff" stroke="#cfd0d8" stroke-width="1"/>
+<rect x="24" y="48" width="1152" height="1072" rx="4" fill="#ffffff" stroke="#9aa0b4" stroke-width="1.1"/>
+<rect x="25" y="44" width="238" height="8" fill="#ffffff"/>
+<text x="40" y="40" fill="#2d3142" font-size="14" font-weight="600" font-family="'Geist', system-ui, sans-serif">Case · Development</text>
+<text x="280" y="40" fill="#7a8399" font-size="9.5" font-family="'Geist', system-ui, sans-serif">Case roles (development.caseteam): Employee · Manager · HR  ·  one case per employee, input: Employee</text>
+
+<!-- Case file items (development.type) -->
+<text x="40" y="74" fill="#7a8399" font-size="7.5" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.12em">CASE FILE</text>
+<g fill="#ffffff" stroke="#6b6f80" stroke-width="0.9">
+  <path d="M100,60 L113,60 L118,65 L118,82 L100,82 Z M113,60 L113,65 L118,65"/>
+  <path d="M182,60 L195,60 L200,65 L200,82 L182,82 Z M195,60 L195,65 L200,65"/>
+  <path d="M242,60 L255,60 L260,65 L260,82 L242,82 Z M255,60 L255,65 L260,65"/>
+  <path d="M322,60 L335,60 L340,65 L340,82 L322,82 Z M335,60 L335,65 L340,65"/>
+  <path d="M408,60 L421,60 L426,65 L426,82 L408,82 Z M421,60 L421,65 L426,65"/>
+  <path d="M524,60 L537,60 L542,65 L542,82 L524,82 Z M537,60 L537,65 L542,65"/>
+  <path d="M636,60 L649,60 L654,65 L654,82 L636,82 Z M649,60 L649,65 L654,65"/>
+  <path d="M722,60 L735,60 L740,65 L740,82 L722,82 Z M735,60 L735,65 L740,65"/>
+</g>
+<g fill="#4f5d75" font-size="9" font-family="'Geist', system-ui, sans-serif">
+  <text x="124" y="75">Employee</text>
+  <text x="206" y="75">Plan</text>
+  <text x="266" y="75">Approval</text>
+  <text x="346" y="75">Activities []</text>
+  <text x="432" y="75">ProgressReviews []</text>
+  <text x="548" y="75">SelfAssessment</text>
+  <text x="660" y="75">Evaluation</text>
+  <text x="746" y="75">PreviousRounds []</text>
+</g>
+<text x="1160" y="75" fill="#7a8399" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">[] = list, tasks append</text>
+
+<!-- ===== Stage: Development plan cycle (continuous) ===== -->
+<path d="M58,110 L1142,110 L1152,120 L1152,1090 L1142,1100 L58,1100 L48,1090 L48,120 Z" fill="#efedfb" stroke="#a9a1e2" stroke-width="1"/>
+<text x="64" y="136" fill="#3b3391" font-size="13" font-weight="600" font-family="'Geist', system-ui, sans-serif">Development plan cycle</text>
+<rect x="1083" y="118" width="56.5" height="13" rx="2" fill="none" stroke="#7f75d3" stroke-opacity="0.6" stroke-width="0.8"/>
+<text x="1111.2" y="127" fill="#7f75d3" font-size="7.5" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">CONTINUOUS</text>
+<rect x="595" y="1087" width="10" height="10" fill="#ffffff" stroke="#7f75d3" stroke-width="0.9"/><line x1="597" y1="1092" x2="603" y2="1092" stroke="#7f75d3" stroke-width="1"/>
+
+<!-- ===== Stage: Development plan (repeating) ===== -->
+<path d="M82,150 L1118,150 L1128,160 L1128,1070 L1118,1080 L82,1080 L72,1070 L72,160 Z" fill="#f8f7fe" stroke="#7f75d3" stroke-width="1"/>
+<text x="86" y="172" fill="#3b3391" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif">Development plan</text>
+<rect x="926" y="160" width="190" height="13" rx="2" fill="none" stroke="#7f75d3" stroke-opacity="0.6" stroke-width="0.8"/>
+<text x="1021" y="169" fill="#7f75d3" font-size="7.5" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">REPEATING · NEXT ONE WAITS FOR START</text>
+<rect x="595" y="1067" width="10" height="10" fill="#ffffff" stroke="#7f75d3" stroke-width="0.9"/><line x1="597" y1="1072" x2="603" y2="1072" stroke="#7f75d3" stroke-width="1"/>
+<text x="586" y="1076.5" fill="#7f75d3" font-size="11" font-weight="600" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">#</text>
+
+<!-- ===== Stage: 1 · Plan ===== -->
+<path d="M106,250 L1094,250 L1104,260 L1104,460 L1094,470 L106,470 L96,460 L96,260 Z" fill="#ffffff" stroke="#b9b2ea" stroke-width="1"/>
+<text x="110" y="271" fill="#5a51b8" font-size="10.5" font-weight="600" font-family="'Geist', system-ui, sans-serif">1 · Plan</text>
+<rect x="595" y="457" width="10" height="10" fill="#ffffff" stroke="#b9b2ea" stroke-width="0.9"/><line x1="597" y1="462" x2="603" y2="462" stroke="#b9b2ea" stroke-width="1"/>
+<text x="586" y="466.5" fill="#b9b2ea" font-size="11" font-weight="600" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">#</text>
+
+<!-- ===== Stage: 2 · Perform plan ===== -->
+<path d="M106,500 L1094,500 L1104,510 L1104,810 L1094,820 L106,820 L96,810 L96,510 Z" fill="#ffffff" stroke="#b9b2ea" stroke-width="1"/>
+<text x="110" y="521" fill="#5a51b8" font-size="10.5" font-weight="600" font-family="'Geist', system-ui, sans-serif">2 · Perform plan</text>
+<rect x="595" y="807" width="10" height="10" fill="#ffffff" stroke="#b9b2ea" stroke-width="0.9"/><line x1="597" y1="812" x2="603" y2="812" stroke="#b9b2ea" stroke-width="1"/>
+<text x="586" y="816.5" fill="#b9b2ea" font-size="11" font-weight="600" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">#</text>
+<g stroke="#b9b2ea" stroke-width="0.9" fill="#ffffff"><rect x="588" y="494" width="24" height="12"/><line x1="596" y1="494" x2="596" y2="506"/><line x1="604" y1="494" x2="604" y2="506"/><line x1="588" y1="500" x2="612" y2="500"/></g>
+<text x="140" y="542" fill="#7a8399" font-size="7.5" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.08em">PLANNING TABLE · ADDED ON DEMAND BY EMPLOYEE / MANAGER ("ADD AN ACTIVITY")</text>
+
+<!-- Sub-stage: Progress check -->
+<path d="M130,630 L750,630 L760,640 L760,790 L750,800 L130,800 L120,790 L120,640 Z" fill="#ffffff" stroke="#cbc5f0" stroke-width="1"/>
+<text x="134" y="649" fill="#5a51b8" font-size="10.5" font-weight="600" font-family="'Geist', system-ui, sans-serif">Progress check</text>
+<rect x="586" y="638" width="166" height="13" rx="2" fill="none" stroke="#7f75d3" stroke-opacity="0.6" stroke-width="0.8"/>
+<text x="669" y="647" fill="#7f75d3" font-size="7.5" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">REPEAT · planCompleted != true</text>
+<rect x="435" y="787" width="10" height="10" fill="#ffffff" stroke="#cbc5f0" stroke-width="0.9"/><line x1="437" y1="792" x2="443" y2="792" stroke="#cbc5f0" stroke-width="1"/>
+<text x="426" y="796.5" fill="#cbc5f0" font-size="11" font-weight="600" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">#</text>
+
+<!-- ===== Stage: 3 · Evaluate plan ===== -->
+<path d="M106,850 L1094,850 L1104,860 L1104,980 L1094,990 L106,990 L96,980 L96,860 Z" fill="#ffffff" stroke="#b9b2ea" stroke-width="1"/>
+<text x="110" y="871" fill="#5a51b8" font-size="10.5" font-weight="600" font-family="'Geist', system-ui, sans-serif">3 · Evaluate plan</text>
+<rect x="595" y="977" width="10" height="10" fill="#ffffff" stroke="#b9b2ea" stroke-width="0.9"/><line x1="597" y1="982" x2="603" y2="982" stroke="#b9b2ea" stroke-width="1"/>
+<text x="586" y="986.5" fill="#b9b2ea" font-size="11" font-weight="600" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">#</text>
+<text x="614" y="986.5" fill="#b0461a" font-size="11" font-weight="700" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">!</text>
+
+<!-- ===== Connectors (onParts) ===== -->
+<g fill="none" stroke="#6b6f80" stroke-width="1.1" stroke-dasharray="6,3,1.5,3">
+  <!-- Start development plan -> Plan stage -->
+  <path d="M140,219 L140,244"/>
+  <!-- Define -> Approve -->
+  <path d="M330,323 L414,323"/>
+  <!-- Approve -> Plan approved (APPROVED) -->
+  <path d="M610,323 L714,323"/>
+  <!-- Approve -> Revise (REJECTED) -->
+  <path d="M560,351 L560,379"/>
+  <!-- Revise -> Approve -->
+  <path d="M420,413 L395.0,413.0 Q390,413 390.0,408.0 L390.0,345.0 Q390,340 395.0,340.0 L414,340"/>
+  <!-- Plan approved -> Perform stage -->
+  <path d="M805,343 L805,494"/>
+  <!-- Timer -> Review progress -->
+  <path d="M189,675 L375.0,675.0 Q380,675 380.0,680.0 L380.0,693.0 Q380,698 385.0,698.0 L414,698"/>
+  <!-- Request early review -> Review progress -->
+  <path d="M189,745 L375.0,745.0 Q380,745 380.0,740.0 L380.0,727.0 Q380,722 385.0,722.0 L414,722"/>
+  <!-- Review progress -> Plan performed (planCompleted) -->
+  <path d="M620,710 L844,710"/>
+  <!-- Plan performed -> exit Perform -->
+  <path d="M1000,710 L1098,710"/>
+  <!-- Plan performed -> Evaluate stage -->
+  <path d="M925,730 L925,844"/>
+  <!-- Self-assessment -> Evaluate results -->
+  <path d="M340,918 L424,918"/>
+  <!-- Evaluate results -> Plan closed (no further development) -->
+  <path d="M630,946 L630.0,1035.0 Q630,1040 635.0,1040.0 L754,1040"/>
+  <!-- Plan closed -> exit Development plan -->
+  <path d="M930,1040 L1122,1040"/>
+  <!-- Evaluate results -> Plan stage again (further development = new round) -->
+  <path d="M470,946 L470.0,1007.0 Q470,1012 465.0,1012.0 L89.0,1012.0 Q84,1012 84.0,1007.0 L84.0,335.0 Q84,330 89.0,330.0 L90,330"/>
+</g>
+
+<!-- ===== Plan items ===== -->
+<!-- User event: Start development plan -->
+<circle cx="140" cy="205" r="14" fill="#fcefdf" stroke="#c98a3f" stroke-width="1.1"/><circle cx="140" cy="205" r="11" fill="none" stroke="#c98a3f" stroke-width="0.8"/>
+<g stroke="#7a4b12" stroke-width="0.9" fill="none" opacity="0.8"><circle cx="140" cy="201" r="2.3"/><path d="M136.5,208.5 Q136.5,204 140,204 Q143.5,204 143.5,208.5"/></g>
+<text x="160" y="204" fill="#2d3142" font-size="9" font-weight="600" font-family="'Geist', system-ui, sans-serif">Start development plan</text>
+<text x="160" y="215" fill="#7a8399" font-size="8.5" font-family="'Geist', system-ui, sans-serif">User event · Manager / HR</text>
+
+<!-- Define goals & plan -->
+<rect x="140" y="295" width="190" height="56" rx="6" fill="#e4f4ee" stroke="#86c3b0" stroke-width="1"/>
+<g stroke="#3f7d6b" stroke-width="0.9" fill="none" opacity="0.8"><circle cx="150" cy="303" r="2.3"/><path d="M146.5,310.5 Q146.5,306 150,306 Q153.5,306 153.5,310.5"/></g>
+<text x="235" y="315" fill="#17463a" font-size="11" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Define goals &amp; plan</text>
+<text x="235" y="328" fill="#3f7d6b" font-size="9" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Employee</text>
+<text x="235" y="342" fill="#3f7d6b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">→ Plan</text>
+
+<!-- Approve plan -->
+<rect x="420" y="295" width="190" height="56" rx="6" fill="#e4f4ee" stroke="#86c3b0" stroke-width="1"/>
+<g stroke="#3f7d6b" stroke-width="0.9" fill="none" opacity="0.8"><circle cx="430" cy="303" r="2.3"/><path d="M426.5,310.5 Q426.5,306 430,306 Q433.5,306 433.5,310.5"/></g>
+<text x="515" y="315" fill="#17463a" font-size="11" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Approve plan</text>
+<text x="515" y="328" fill="#3f7d6b" font-size="9" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Manager</text>
+<text x="515" y="342" fill="#3f7d6b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">→ Approval</text>
+<text x="602" y="347" fill="#7f75d3" font-size="10" font-weight="600" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">#</text>
+
+<!-- Revise plan -->
+<rect x="420" y="385" width="190" height="56" rx="6" fill="#e4f4ee" stroke="#86c3b0" stroke-width="1"/>
+<g stroke="#3f7d6b" stroke-width="0.9" fill="none" opacity="0.8"><circle cx="430" cy="393" r="2.3"/><path d="M426.5,400.5 Q426.5,396 430,396 Q433.5,396 433.5,400.5"/></g>
+<text x="515" y="405" fill="#17463a" font-size="11" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Revise plan</text>
+<text x="515" y="418" fill="#3f7d6b" font-size="9" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Employee</text>
+<text x="515" y="432" fill="#3f7d6b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">→ Plan</text>
+<text x="602" y="437" fill="#7f75d3" font-size="10" font-weight="600" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">#</text>
+
+<!-- Milestone: Plan approved (required) -->
+<rect x="720" y="303" width="170" height="40" rx="20" fill="#eaf2d6" stroke="#a9c46f" stroke-width="1"/>
+<text x="805" y="321" fill="#3e5a14" font-size="11" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Plan approved</text>
+<text x="805" y="334" fill="#5d7a2a" font-size="9" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">milestone</text>
+<text x="878" y="339" fill="#b0461a" font-size="10" font-weight="700" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">!</text>
+
+<!-- Discretionary activity tasks -->
+<rect x="140" y="550" width="190" height="56" rx="6" fill="#e4f4ee" stroke="#86c3b0" stroke-width="1.3" stroke-dasharray="5,3"/>
+<g stroke="#3f7d6b" stroke-width="0.9" fill="none" opacity="0.8"><circle cx="150" cy="558" r="2.3"/><path d="M146.5,565.5 Q146.5,561 150,561 Q153.5,561 153.5,565.5"/></g>
+<text x="235" y="570" fill="#17463a" font-size="11" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Projects and assignments</text>
+<text x="235" y="583" fill="#3f7d6b" font-size="9" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Employee · discretionary</text>
+<text x="235" y="597" fill="#3f7d6b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">→ Activities · append</text>
+<text x="322" y="602" fill="#7f75d3" font-size="10" font-weight="600" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">#</text>
+
+<rect x="350" y="550" width="190" height="56" rx="6" fill="#e4f4ee" stroke="#86c3b0" stroke-width="1.3" stroke-dasharray="5,3"/>
+<g stroke="#3f7d6b" stroke-width="0.9" fill="none" opacity="0.8"><circle cx="360" cy="558" r="2.3"/><path d="M356.5,565.5 Q356.5,561 360,561 Q363.5,561 363.5,565.5"/></g>
+<text x="445" y="570" fill="#17463a" font-size="11" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Training and learning</text>
+<text x="445" y="583" fill="#3f7d6b" font-size="9" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Employee · discretionary</text>
+<text x="445" y="597" fill="#3f7d6b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">→ Activities · append</text>
+<text x="532" y="602" fill="#7f75d3" font-size="10" font-weight="600" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">#</text>
+
+<rect x="560" y="550" width="190" height="56" rx="6" fill="#e4f4ee" stroke="#86c3b0" stroke-width="1.3" stroke-dasharray="5,3"/>
+<g stroke="#3f7d6b" stroke-width="0.9" fill="none" opacity="0.8"><circle cx="570" cy="558" r="2.3"/><path d="M566.5,565.5 Q566.5,561 570,561 Q573.5,561 573.5,565.5"/></g>
+<text x="655" y="570" fill="#17463a" font-size="11" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Coaching and mentoring</text>
+<text x="655" y="583" fill="#3f7d6b" font-size="9" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Employee · discretionary</text>
+<text x="655" y="597" fill="#3f7d6b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">→ Activities · append</text>
+<text x="742" y="602" fill="#7f75d3" font-size="10" font-weight="600" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">#</text>
+
+<!-- Timer: Progress check due -->
+<circle cx="175" cy="675" r="14" fill="#ffffff" stroke="#3a3d4a" stroke-width="1.1"/><circle cx="175" cy="675" r="11" fill="none" stroke="#3a3d4a" stroke-width="0.8"/><path d="M175,668 L175,675 L180,677.5" fill="none" stroke="#3a3d4a" stroke-width="1.2" stroke-linecap="round"/>
+<text x="175" y="702" fill="#2d3142" font-size="9" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Progress check due</text>
+<text x="175" y="713" fill="#7a8399" font-size="8.5" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">P14D</text>
+
+<!-- User event: Request early review -->
+<circle cx="175" cy="745" r="14" fill="#fcefdf" stroke="#c98a3f" stroke-width="1.1"/><circle cx="175" cy="745" r="11" fill="none" stroke="#c98a3f" stroke-width="0.8"/>
+<g stroke="#7a4b12" stroke-width="0.9" fill="none" opacity="0.8"><circle cx="175" cy="741" r="2.3"/><path d="M171.5,748.5 Q171.5,744 175,744 Q178.5,744 178.5,748.5"/></g>
+<text x="175" y="772" fill="#2d3142" font-size="9" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Request early review</text>
+<text x="175" y="783" fill="#7a8399" font-size="8.5" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">User event · Manager</text>
+
+<!-- Review progress (required) -->
+<rect x="420" y="682" width="200" height="56" rx="6" fill="#e4f4ee" stroke="#86c3b0" stroke-width="1"/>
+<g stroke="#3f7d6b" stroke-width="0.9" fill="none" opacity="0.8"><circle cx="430" cy="690" r="2.3"/><path d="M426.5,697.5 Q426.5,693 430,693 Q433.5,693 433.5,697.5"/></g>
+<text x="520" y="702" fill="#17463a" font-size="11" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Review progress</text>
+<text x="520" y="715" fill="#3f7d6b" font-size="9" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Manager</text>
+<text x="520" y="729" fill="#3f7d6b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">→ ProgressReviews · append</text>
+<text x="612" y="734" fill="#b0461a" font-size="10" font-weight="700" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">!</text>
+
+<!-- Milestone: Plan performed -->
+<rect x="850" y="690" width="150" height="40" rx="20" fill="#eaf2d6" stroke="#a9c46f" stroke-width="1"/>
+<text x="925" y="708" fill="#3e5a14" font-size="11" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Plan performed</text>
+<text x="925" y="721" fill="#5d7a2a" font-size="9" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">milestone</text>
+
+<!-- Self-assessment -->
+<rect x="140" y="890" width="200" height="56" rx="6" fill="#e4f4ee" stroke="#86c3b0" stroke-width="1"/>
+<g stroke="#3f7d6b" stroke-width="0.9" fill="none" opacity="0.8"><circle cx="150" cy="898" r="2.3"/><path d="M146.5,905.5 Q146.5,901 150,901 Q153.5,901 153.5,905.5"/></g>
+<text x="240" y="910" fill="#17463a" font-size="11" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Self-assessment</text>
+<text x="240" y="923" fill="#3f7d6b" font-size="9" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Employee · row per goal pre-filled</text>
+<text x="240" y="937" fill="#3f7d6b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">→ SelfAssessment</text>
+
+<!-- Evaluate & document results -->
+<rect x="430" y="890" width="220" height="56" rx="6" fill="#e4f4ee" stroke="#86c3b0" stroke-width="1"/>
+<g stroke="#3f7d6b" stroke-width="0.9" fill="none" opacity="0.8"><circle cx="440" cy="898" r="2.3"/><path d="M436.5,905.5 Q436.5,901 440,901 Q443.5,901 443.5,905.5"/></g>
+<text x="540" y="910" fill="#17463a" font-size="11" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Evaluate &amp; document results</text>
+<text x="540" y="923" fill="#3f7d6b" font-size="9" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Manager</text>
+<text x="540" y="937" fill="#3f7d6b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">→ Evaluation, PreviousRounds + round</text>
+
+<!-- Milestone: Plan closed -->
+<rect x="760" y="1020" width="170" height="40" rx="20" fill="#eaf2d6" stroke="#a9c46f" stroke-width="1"/>
+<text x="845" y="1038" fill="#3e5a14" font-size="11" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Plan closed</text>
+<text x="845" y="1051" fill="#5d7a2a" font-size="9" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">milestone</text>
+
+<!-- ===== Sentries ===== -->
+<!-- entry criteria (white) -->
+<g fill="#ffffff" stroke="#3a3d4a" stroke-width="1">
+  <polygon points="140,242 146,250 140,258 134,250"/>   <!-- Plan stage: on Start -->
+  <polygon points="96,322 102,330 96,338 90,330"/>       <!-- Plan stage: further development -->
+  <polygon points="420,315 426,323 420,331 414,323"/>   <!-- Approve: Define complete -->
+  <polygon points="420,332 426,340 420,348 414,340"/>   <!-- Approve: Revise complete -->
+  <polygon points="560,377 566,385 560,393 554,385"/>   <!-- Revise: rejected -->
+  <polygon points="720,315 726,323 720,331 714,323"/>   <!-- Plan approved: approved -->
+  <polygon points="805,492 811,500 805,508 799,500"/>   <!-- Perform: Plan approved -->
+  <polygon points="420,690 426,698 420,706 414,698"/>   <!-- Review: timer -->
+  <polygon points="420,714 426,722 420,730 414,722"/>   <!-- Review: early review -->
+  <polygon points="850,702 856,710 850,718 844,710"/>   <!-- Plan performed: planCompleted -->
+  <polygon points="925,842 931,850 925,858 919,850"/>   <!-- Evaluate: Plan performed -->
+  <polygon points="430,910 436,918 430,926 424,918"/>   <!-- Evaluate results: Self-assessment complete -->
+  <polygon points="760,1032 766,1040 760,1048 754,1040"/> <!-- Plan closed: no further development -->
+</g>
+<!-- exit criteria (black) -->
+<g fill="#1b1d24" stroke="#3a3d4a" stroke-width="1">
+  <polygon points="1104,702 1110,710 1104,718 1098,710"/>   <!-- Perform exits on Plan performed -->
+  <polygon points="1128,1032 1134,1040 1128,1048 1122,1040"/> <!-- Development plan exits on Plan closed -->
+</g>
+
+<!-- ===== Connector labels ===== -->
+<g fill="#9c2a8a" font-size="7.5" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.03em">
+  <text x="618" y="316">APPROVED</text>
+  <text x="566" y="372">REJECTED</text>
+  <text x="628" y="703">planCompleted</text>
+  <text x="638" y="1000">no further development</text>
+  <text x="200" y="1006">furtherDevelopment · new round</text>
+</g>
+<g fill="#7a8399" font-size="7.5" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.03em">
+  <text x="1094" y="748" text-anchor="end">exit · closes open activities</text>
+  <text x="1120" y="1032" text-anchor="end">ends this plan</text>
+  <text x="811" y="488">start</text>
+  <text x="931" y="840">start</text>
+</g>
+
+<!-- ===== Legend ===== -->
+<line x1="24" y1="1140" x2="1176" y2="1140" stroke="rgba(45,49,66,0.12)" stroke-width="0.8"/>
+<text x="24" y="1162" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">CMMN</text>
+<path d="M104,1152 L120,1152 L124,1156 L124,1164 L120,1168 L104,1168 L100,1164 L100,1156 Z" fill="#efedfb" stroke="#a9a1e2" stroke-width="1"/>
+<text x="132" y="1164" fill="#4f5d75" font-size="10" font-family="'Geist', system-ui, sans-serif">Stage (expanded ⊟)</text>
+<rect x="280" y="1152" width="24" height="16" rx="4" fill="#e4f4ee" stroke="#86c3b0"/>
+<g stroke="#3f7d6b" stroke-width="0.9" fill="none" opacity="0.8"><circle cx="290" cy="1156" r="2.3"/><path d="M286.5,1163.5 Q286.5,1159 290,1159 Q293.5,1159 293.5,1163.5"/></g>
+<text x="312" y="1164" fill="#4f5d75" font-size="10" font-family="'Geist', system-ui, sans-serif">Human task (form)</text>
+<rect x="460" y="1152" width="24" height="16" rx="4" fill="#e4f4ee" stroke="#86c3b0" stroke-width="1.3" stroke-dasharray="4,2"/>
+<text x="492" y="1164" fill="#4f5d75" font-size="10" font-family="'Geist', system-ui, sans-serif">Discretionary task</text>
+<rect x="640" y="1152" width="24" height="16" rx="8" fill="#eaf2d6" stroke="#a9c46f"/>
+<text x="672" y="1164" fill="#4f5d75" font-size="10" font-family="'Geist', system-ui, sans-serif">Milestone</text>
+<circle cx="832" cy="1160" r="14" fill="#ffffff" stroke="#3a3d4a" stroke-width="1.1"/><circle cx="832" cy="1160" r="11" fill="none" stroke="#3a3d4a" stroke-width="0.8"/><path d="M832,1153 L832,1160 L837,1162.5" fill="none" stroke="#3a3d4a" stroke-width="1.2" stroke-linecap="round"/>
+<text x="852" y="1164" fill="#4f5d75" font-size="10" font-family="'Geist', system-ui, sans-serif">Timer event listener</text>
+<circle cx="1012" cy="1160" r="14" fill="#fcefdf" stroke="#c98a3f" stroke-width="1.1"/><circle cx="1012" cy="1160" r="11" fill="none" stroke="#c98a3f" stroke-width="0.8"/>
+<g stroke="#7a4b12" stroke-width="0.9" fill="none" opacity="0.8"><circle cx="1012" cy="1156" r="2.3"/><path d="M1008.5,1163.5 Q1008.5,1159 1012,1159 Q1015.5,1159 1015.5,1163.5"/></g>
+<text x="1032" y="1164" fill="#4f5d75" font-size="10" font-family="'Geist', system-ui, sans-serif">User event listener</text>
+
+<polygon points="112,1184 118,1192 112,1200 106,1192" fill="#ffffff" stroke="#3a3d4a" stroke-width="1"/>
+<text x="132" y="1196" fill="#4f5d75" font-size="10" font-family="'Geist', system-ui, sans-serif">Entry criterion (sentry)</text>
+<polygon points="292,1184 298,1192 292,1200 286,1192" fill="#1b1d24" stroke="#3a3d4a" stroke-width="1"/>
+<text x="312" y="1196" fill="#4f5d75" font-size="10" font-family="'Geist', system-ui, sans-serif">Exit criterion</text>
+<path d="M460,1192 L484,1192" fill="none" stroke="#6b6f80" stroke-width="1.1" stroke-dasharray="6,3,1.5,3"/>
+<text x="492" y="1196" fill="#4f5d75" font-size="10" font-family="'Geist', system-ui, sans-serif">Connector (onPart)</text>
+<text x="652" y="1197" fill="#7f75d3" font-size="12" font-weight="600" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">#</text>
+<text x="672" y="1196" fill="#4f5d75" font-size="10" font-family="'Geist', system-ui, sans-serif">Repetition rule</text>
+<g stroke="#6b6f80" stroke-width="0.9" fill="#ffffff"><rect x="820" y="1186" width="24" height="12"/><line x1="828" y1="1186" x2="828" y2="1198"/><line x1="836" y1="1186" x2="836" y2="1198"/><line x1="820" y1="1192" x2="844" y2="1192"/></g>
+<text x="852" y="1196" fill="#4f5d75" font-size="10" font-family="'Geist', system-ui, sans-serif">Planning table</text>
+<path d="M1003,1181 L1016,1181 L1021,1186 L1021,1203 L1003,1203 Z M1016,1181 L1016,1186 L1021,1186" fill="#ffffff" stroke="#6b6f80" stroke-width="0.9"/>
+<text x="1032" y="1196" fill="#4f5d75" font-size="10" font-family="'Geist', system-ui, sans-serif">Case file item</text>
+
+<text x="112" y="1227" fill="#b0461a" font-size="12" font-weight="700" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">!</text>
+<text x="132" y="1226" fill="#4f5d75" font-size="10" font-family="'Geist', system-ui, sans-serif">Required rule</text>
+<text x="280" y="1226" fill="#9c2a8a" font-size="8" font-family="'Geist Mono', ui-monospace, monospace">APPROVED</text>
+<text x="330" y="1226" fill="#4f5d75" font-size="10" font-family="'Geist', system-ui, sans-serif">ifPart condition on the case file</text>
+<text x="640" y="1226" fill="#3f7d6b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace">→ Item</text>
+<text x="728" y="1226" fill="#4f5d75" font-size="10" font-family="'Geist', system-ui, sans-serif">Task output written to the case file (append = added to a list)</text>
+<text x="100" y="1250" fill="#4f5d75" font-size="9.5" font-family="'Geist', system-ui, sans-serif">No gateways in CMMN: two sentries on one item = either one starts it (OR); Review progress starts on the 14-day timer or on Request early review, whichever comes first.</text>
+</svg>
+</div>
+</body>
+</html>

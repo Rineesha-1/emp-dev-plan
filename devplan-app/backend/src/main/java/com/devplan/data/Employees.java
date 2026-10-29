@@ -13,10 +13,10 @@ import com.devplan.config.CurrentUser;
 public class Employees {
 
     public record Employee(String employeeId, String name, String jobTitle, String username, String userId,
-                           String managerId) {
+                           String managerId, String role) {
     }
 
-    private static final String SELECT = "SELECT employee_id, name, job_title, username, user_id, manager_id FROM employee ";
+    private static final String SELECT = "SELECT employee_id, name, job_title, username, user_id, manager_id, role FROM employee ";
 
     private final JdbcClient db;
 
@@ -33,12 +33,13 @@ public class Employees {
     }
 
     /** Adds a new employee, with the real Keycloak user id already known. */
-    public Employee insert(String name, String jobTitle, String username, String userId, String managerId) {
+    public Employee insert(String name, String jobTitle, String username, String userId, String managerId,
+                           String role) {
         String employeeId = UUID.randomUUID().toString();
-        db.sql("INSERT INTO employee (employee_id, name, job_title, username, user_id, manager_id) "
-                        + "VALUES (?, ?, ?, ?, ?, ?)")
-                .params(employeeId, name, jobTitle, username, userId, managerId).update();
-        return new Employee(employeeId, name, jobTitle, username, userId, managerId);
+        db.sql("INSERT INTO employee (employee_id, name, job_title, username, user_id, manager_id, role) "
+                        + "VALUES (?, ?, ?, ?, ?, ?, ?)")
+                .params(employeeId, name, jobTitle, username, userId, managerId, role).update();
+        return new Employee(employeeId, name, jobTitle, username, userId, managerId, role);
     }
 
     /** HR sees everyone, a manager their direct reports, an employee themselves. */
