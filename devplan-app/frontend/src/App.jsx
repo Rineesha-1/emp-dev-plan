@@ -330,7 +330,7 @@ function EmployeeAdmin() {
         <h1>Employees</h1>
         <button className="quiet" onClick={reload}>Refresh</button>
       </div>
-      <form className="start" onSubmit={submit}>
+      <form className="start pairs" onSubmit={submit}>
         <label htmlFor="emp-name">Name</label>
         <input id="emp-name" {...field('name')} required />
         <label htmlFor="emp-title">Job title</label>
@@ -349,7 +349,8 @@ function EmployeeAdmin() {
         <label htmlFor="emp-manager">Manager</label>
         <select id="emp-manager" {...field('managerId')}>
           <option value="">No manager</option>
-          {(employees || []).map((e) => <option key={e.employeeId} value={e.employeeId}>{e.name}</option>)}
+          {(employees || []).filter((e) => e.role === 'manager')
+            .map((e) => <option key={e.employeeId} value={e.employeeId}>{e.name}</option>)}
         </select>
         <button className="primary" type="submit" disabled={!canSubmit || busy}>{busy ? 'Adding…' : 'Add employee'}</button>
         <Problem message={submitError} />

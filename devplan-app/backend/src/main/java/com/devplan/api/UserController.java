@@ -80,15 +80,15 @@ public class UserController {
         if (employees.byUsername(req.username()).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, req.username() + " is already in use");
         }
-        if (req.managerId() != null && employees.byId(req.managerId()).isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No such manager");
+        if (req.managerId() != null && !employees.byId(req.managerId()).map(m -> "manager".equals(m.role())).orElse(false)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The manager must be an employee with the manager role");
         }
 
         String userId = keycloak.createUser(req.name(), req.username(), req.email());
         try {
             keycloak.assignRealmRole(userId, req.role());
             keycloak.sendSetPasswordEmail(userId, props.app().baseUrl());
-            employees.insert(req.name(), req.jobTitle(), req.username(), userId, req.managerId());
+            employees.insert(req.name(), req.jobTitle(), req.username(), userId, req.managerId(), req.role());
         } catch (RuntimeException e) {
             try {
                 keycloak.deleteUser(userId);
