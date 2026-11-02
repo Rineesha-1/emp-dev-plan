@@ -3,10 +3,11 @@
         <documentation textFormat="text/plain">
             <text><![CDATA[Approve plan. Owner: Manager. ]]></text>
         </documentation>
-        <input id="i_Employee__approve_plan" name="Employee"/>
-        <input id="i_Plan__approve_plan" name="Plan"/>
-        <output id="o_Approval__approve_plan" name="Approval"/>
-        <task-model><![CDATA[{
+        <input id="i_Employee__approve_plan" name="Employee" typeRef="dv_employee.type"/>
+        <input id="i_Plan__approve_plan" name="Plan" typeRef="dv_plan.type"/>
+        <output id="o_Approval__approve_plan" name="Approval" typeRef="dv_approval.type"/>
+        <output id="Budget__lePV" name="Budget" typeRef="dv_budget.type"/>
+        <task-model>{
   "schema": {
     "title": "Approve plan",
     "description": "Approve the plan, or reject it with comments to send it back to the employee.",
@@ -15,6 +16,14 @@
       "Approval"
     ],
     "properties": {
+          "Budget": {
+  "type": "object",
+  "title": "Training budget",
+  "properties": {
+    "amount": { "type": "number", "title": "Amount" }
+  }
+},
+
       "Employee": {
         "type": "object",
         "title": "Employee",
@@ -228,309 +237,11 @@
     "ui:order": [
       "Employee",
       "Plan",
-      "Approval"
+      "Approval",
+          "Budget"
     ]
   },
-  "jsonforms": {
-    "schema": {
-      "title": "Approve plan",
-      "description": "Approve the plan, or reject it with comments to send it back to the employee.",
-      "type": "object",
-      "required": [
-        "Approval"
-      ],
-      "properties": {
-        "Employee": {
-          "type": "object",
-          "title": "Employee",
-          "properties": {
-            "employeeId": {
-              "type": "string",
-              "title": "Employee number"
-            },
-            "name": {
-              "type": "string",
-              "title": "Name"
-            },
-            "jobTitle": {
-              "type": "string",
-              "title": "Job title"
-            },
-            "managerId": {
-              "type": "string",
-              "title": "Manager number"
-            },
-            "managerName": {
-              "type": "string",
-              "title": "Manager"
-            },
-            "trigger": {
-              "type": "string",
-              "title": "Reason for the plan",
-              "oneOf": [
-                {
-                  "const": "ANNUAL_REVIEW",
-                  "title": "Annual review"
-                },
-                {
-                  "const": "NEW_ROLE",
-                  "title": "New role"
-                },
-                {
-                  "const": "CAREER_GROWTH",
-                  "title": "Career growth"
-                },
-                {
-                  "const": "PERFORMANCE_IMPROVEMENT",
-                  "title": "Performance improvement"
-                },
-                {
-                  "const": "ONBOARDING",
-                  "title": "Onboarding"
-                }
-              ]
-            }
-          }
-        },
-        "Plan": {
-          "type": "object",
-          "title": "Development plan",
-          "properties": {
-            "period": {
-              "type": "string",
-              "title": "Plan period"
-            },
-            "goals": {
-              "type": "array",
-              "title": "Goals",
-              "items": {
-                "type": "object",
-                "title": "Goal",
-                "properties": {
-                  "title": {
-                    "type": "string",
-                    "title": "Goal"
-                  },
-                  "type": {
-                    "type": "string",
-                    "title": "Type",
-                    "oneOf": [
-                      {
-                        "const": "SKILL",
-                        "title": "Skill"
-                      },
-                      {
-                        "const": "KNOWLEDGE",
-                        "title": "Knowledge"
-                      },
-                      {
-                        "const": "BEHAVIOUR",
-                        "title": "Behaviour"
-                      },
-                      {
-                        "const": "CAREER",
-                        "title": "Career"
-                      }
-                    ]
-                  },
-                  "description": {
-                    "type": "string",
-                    "title": "Description"
-                  },
-                  "successCriteria": {
-                    "type": "string",
-                    "title": "How we know it is achieved"
-                  },
-                  "targetDate": {
-                    "type": "string",
-                    "title": "Target date",
-                    "format": "date"
-                  }
-                },
-                "required": [
-                  "title",
-                  "type",
-                  "successCriteria",
-                  "targetDate"
-                ]
-              },
-              "minItems": 1
-            }
-          },
-          "required": [
-            "period",
-            "goals"
-          ]
-        },
-        "Approval": {
-          "type": "object",
-          "title": "Manager's decision",
-          "properties": {
-            "decision": {
-              "type": "string",
-              "title": "Decision",
-              "oneOf": [
-                {
-                  "const": "APPROVED",
-                  "title": "Approved"
-                },
-                {
-                  "const": "REJECTED",
-                  "title": "Rejected"
-                }
-              ]
-            },
-            "comments": {
-              "type": "string",
-              "title": "Comments"
-            }
-          },
-          "required": [
-            "decision"
-          ],
-          "if": {
-            "properties": {
-              "decision": {
-                "const": "REJECTED"
-              }
-            },
-            "required": [
-              "decision"
-            ]
-          },
-          "then": {
-            "required": [
-              "comments"
-            ]
-          }
-        }
-      }
-    },
-    "submitLabel": "Save decision",
-    "uischema": {
-      "type": "VerticalLayout",
-      "elements": [
-        {
-          "type": "Group",
-          "label": "Employee",
-          "elements": [
-            {
-              "type": "Control",
-              "scope": "#/properties/Employee/properties/name",
-              "options": {
-                "readonly": true
-              }
-            },
-            {
-              "type": "Control",
-              "scope": "#/properties/Employee/properties/jobTitle",
-              "options": {
-                "readonly": true
-              }
-            },
-            {
-              "type": "Control",
-              "scope": "#/properties/Employee/properties/managerName",
-              "options": {
-                "readonly": true
-              }
-            },
-            {
-              "type": "Control",
-              "scope": "#/properties/Employee/properties/trigger",
-              "options": {
-                "readonly": true
-              }
-            }
-          ]
-        },
-        {
-          "type": "Group",
-          "label": "Development plan",
-          "elements": [
-            {
-              "type": "Control",
-              "scope": "#/properties/Plan/properties/period",
-              "options": {
-                "readonly": true
-              }
-            },
-            {
-              "type": "Control",
-              "scope": "#/properties/Plan/properties/goals",
-              "options": {
-                "showSortButtons": false,
-                "elementLabelProp": "title",
-                "detail": {
-                  "type": "VerticalLayout",
-                  "elements": [
-                    {
-                      "type": "Control",
-                      "scope": "#/properties/title",
-                      "options": {
-                        "readonly": true
-                      }
-                    },
-                    {
-                      "type": "Control",
-                      "scope": "#/properties/type",
-                      "options": {
-                        "readonly": true
-                      }
-                    },
-                    {
-                      "type": "Control",
-                      "scope": "#/properties/description",
-                      "options": {
-                        "multi": true,
-                        "readonly": true
-                      }
-                    },
-                    {
-                      "type": "Control",
-                      "scope": "#/properties/successCriteria",
-                      "options": {
-                        "multi": true,
-                        "readonly": true
-                      }
-                    },
-                    {
-                      "type": "Control",
-                      "scope": "#/properties/targetDate",
-                      "options": {
-                        "readonly": true
-                      }
-                    }
-                  ]
-                },
-                "disableAdd": true,
-                "disableRemove": true,
-                "readonly": true
-              }
-            }
-          ]
-        },
-        {
-          "type": "Group",
-          "label": "Manager's decision",
-          "elements": [
-            {
-              "type": "Control",
-              "scope": "#/properties/Approval/properties/decision"
-            },
-            {
-              "type": "Control",
-              "scope": "#/properties/Approval/properties/comments",
-              "options": {
-                "multi": true
-              }
-            }
-          ]
-        }
-      ]
-    }
-  },
-  "output": "Approval"
-}]]></task-model>
+  "submitLabel": "Save decision"
+}</task-model>
     </cafienne:implementation>
 </humanTask>

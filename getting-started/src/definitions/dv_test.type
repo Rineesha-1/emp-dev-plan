@@ -1,0 +1,5 @@
+<type xmlns="http://www.omg.org/spec/CMMN/20151109/MODEL" xmlns:cafienne="org.cafienne" id="dv_test.type" name="dv_test">
+    <schema>
+        <property id="sp__Pg7L1_0" name="name" type="string" multiplicity="ExactlyOne"/>
+    </schema>
+</type>

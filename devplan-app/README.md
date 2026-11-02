@@ -25,12 +25,12 @@ Browser ──► frontend (nginx :8090) ──/api──► backend (Spring Boo
   - Every task gets its data from the case file through **input mappings** and writes its form back through **output mappings**. Single items are replaced (binding refinement `replace`), lists are appended to.
   - The engine also pre-fills forms: one row per goal in the self-assessment and evaluation, and the last plan when a new round starts. List inputs show only the current round's activities and reviews.
 - **Thin backend**: no business data and no code per task.
-  - Task form = the task-model's `jsonforms` part; form data = the engine task's `input`; *Submit* sends the task-model's `output` field back to the engine.
+  - Tasks work as in the CaseFabric Case UI: form = the task-model; form data = the engine task's `output` once something was submitted, otherwise its `input`; *Submit* sends the whole form to the engine, whose output mappings write the output parameters to the case file.
   - Case pages show the engine case (case file, plan items, tasks) as it is.
   - The only table left is the employee directory (`devplan.employee`), used to start a case (employee, manager, job title, Keycloak ids).
-- **JSON forms**: each task's form is the `task-model` in its `.humantask` file (`getting-started/src/definitions/dv_*.humantask`).
-  - `jsonforms` (`schema` + `uischema`) is rendered by [JSONForms](https://jsonforms.io) with the material renderers in this app.
-  - The top-level `schema` + `uiSchema` stay in rjsf format for the CaseFabric Case UI.
+- **JSON forms**: each task's form is the `task-model` in its `.humantask` file (`getting-started/src/definitions/dv_*.humantask`): `schema` + `uiSchema`, and an optional `submitLabel` for the button.
+  - Rendered as the Case UI does: with [RJSF](https://rjsf-team.github.io/react-jsonschema-form/) (MUI theme) by default, or with [JSONForms](https://jsonforms.io) when the `uiSchema` is a JSONForms layout (`type` / `elements`). `$CURRENT_USER` in the schema becomes the signed-in user's id.
+  - Each task parameter has a `typeRef` to its `dv_*.type` file, so the Designer can generate the schema.
 - **Engine permissions**: the engine checks case roles itself, because Spring forwards the user's token. Spring adds new Keycloak users to the engine tenant on their first call, using the `devplan-backend` service account.
 
 ## Run
@@ -103,17 +103,26 @@ After changing `src/keycloak/devplan-realm.json`, run `docker compose up -d --fo
 
 ## Change the model or the forms
 
+The Case Designer (http://localhost:2081) is the source of truth for `getting-started/src/definitions`. A change to a human task shows up in this app without code changes, as in the CaseFabric Case UI:
+
+1. Open the human task, add the input or output parameter and pick its type (a `.type` file, e.g. `dv_plan.type`; add a new `.type` for new data and add it to `development.type`).
+2. Click **Generate schema from type information** for a starting form, or edit the `schema` / `uiSchema` JSON by hand. Generating replaces the whole task-model, so the hand-made titles, enums, widgets and `submitLabel` are lost; it also types a list parameter as a single object, so fix those by hand.
+3. In the case model, bind the parameter to the case file item (input or output mapping).
+4. Deploy:
+
 ```bash
 cd getting-started
-python generate-development.py src/definitions   # 1. write the Case Designer source files
-python deploy-case.py development                # 2. compile, validate and deploy through the engine API
-python migrate-development-cases.py              # 3. optional: move running cases onto the new definition
+python deploy-case.py development                # compile, validate and deploy through the engine API (or Deploy in the Designer)
+python migrate-development-cases.py              # optional: move running cases onto the new definition
 ```
+
+- Every top-level property in `schema` is one task parameter. Output fields must have the same name as an output parameter; the engine ignores the other fields of a submitted form. When the `uiSchema` has a root `ui:order`, add the new field to it (or end it with `"*"`), otherwise the form does not render.
+- A task keeps the task-model of the definition its case was started or migrated with: try a change on a new case.
+- `generate-development.py` is retired: it wrote the first version of these files and would overwrite every Designer change.
 
 - `compile-case.py` compiles the source files into the single definitions XML that the engine deploys (what the Designer's Deploy button does). It runs on its own too: `python compile-case.py src/definitions development -o development.xml`. It supports stages, human tasks, milestones, timers, user events and planning tables; a model with process or case tasks (travelrequest) still has to be deployed from the Designer.
 - `deploy-case.py` posts the XML to the engine: `POST /repository/validate`, then `POST /repository/deploy/development.xml?tenant=devplan`. The engine writes it to `target/definitions/development.xml`. It logs in as the `devplan-backend` service account; `--user sridhar_hr` deploys as a user. Only owners of the devplan tenant may deploy (sridhar_hr, the service account); other users get 401. `--validate-only` only validates.
 - New cases use the new definition; `migrate-development-cases.py` moves running ones. Check that on a test case first when the case file changed.
-- The Case Designer (http://localhost:2081) still opens the same source files, for viewing or editing the diagram.
 
 ## Code
 
