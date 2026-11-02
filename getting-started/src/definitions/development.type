@@ -145,5 +145,10 @@
                 </property>
             </schema>
         </property>
+        <property id="sp__RSces_0" name="test" type="object" multiplicity="ExactlyOne">
+            <schema id="_RSces_0" name="Schema_0">
+                <property id="sp__RSces_1" name="testt" type="string" multiplicity="ExactlyOne"/>
+            </schema>
+        </property>
     </schema>
 </type>

@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DevPlan Architecture</title>
+<style>
+  :root {
+    --bg: #f6f8fb; --paper: #ffffff; --ink: #14233a; --muted: #55657d; --line: #2b4c7e;
+    --kc: #e6f0fb; --kc-b: #6f9fd8;
+    --fe: #e3f1fc; --fe-b: #78b4e6;
+    --be: #e6f6ea; --be-b: #7cc28f;
+    --en: #efe9fb; --en-b: #a68ad9;
+    --db: #fbf3e2; --db-b: #e0b55a;
+    --ml: #e4f6f5; --ml-b: #7cc9c3;
+    --us: #eef1f5; --us-b: #a9b4c4;
+    --pg: #fafbfd;
+    --step: #2563c9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1724; --paper: #172133; --ink: #e6ecf5; --muted: #a3b0c4; --line: #8fb2e8;
+      --kc: #1b2b44; --kc-b: #4f7fbf; --fe: #172c42; --fe-b: #4c8cc4;
+      --be: #17321f; --be-b: #4f9a64; --en: #261f3d; --en-b: #8466c0;
+      --db: #33291a; --db-b: #b88f3c; --ml: #15322f; --ml-b: #4fa39c;
+      --us: #1e2635; --us-b: #5d6a80; --pg: #121b2a; --step: #5b8ff0;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1724; --paper: #172133; --ink: #e6ecf5; --muted: #a3b0c4; --line: #8fb2e8;
+    --kc: #1b2b44; --kc-b: #4f7fbf; --fe: #172c42; --fe-b: #4c8cc4;
+    --be: #17321f; --be-b: #4f9a64; --en: #261f3d; --en-b: #8466c0;
+    --db: #33291a; --db-b: #b88f3c; --ml: #15322f; --ml-b: #4fa39c;
+    --us: #1e2635; --us-b: #5d6a80; --pg: #121b2a; --step: #5b8ff0;
+  }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+  .wrap { max-width: 1600px; margin: 0 auto; padding: 16px; }
+  svg { width: 100%; height: auto; display: block; }
+  svg text { fill: var(--ink); font-family: inherit; }
+  .t-title { font-size: 34px; font-weight: 700; }
+  .t-sub { font-size: 16px; fill: var(--muted); }
+  .t-h { font-size: 22px; font-weight: 700; }
+  .t-m { font-size: 15px; fill: var(--muted); }
+  .t-s { font-size: 14px; }
+  .t-lbl { font-size: 14px; font-weight: 600; fill: var(--line); }
+  .t-step { font-size: 15px; font-weight: 700; }
+  .wire { stroke: var(--line); stroke-width: 2.2; fill: none; }
+  .note { font-size: 14px; fill: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+<svg viewBox="0 0 1600 1000" role="img" aria-label="DevPlan app and CaseFabric architecture">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--line)"/>
+    </marker>
+  </defs>
+
+  <text x="800" y="46" text-anchor="middle" class="t-title">DevPlan App + CaseFabric: How the System Works</text>
+  <text x="800" y="74" text-anchor="middle" class="t-sub">Development plan case · Employee, Manager, HR</text>
+
+  <!-- Mailcatcher -->
+  <rect x="200" y="105" width="270" height="90" rx="12" fill="var(--ml)" stroke="var(--ml-b)" stroke-width="2"/>
+  <text x="335" y="138" text-anchor="middle" class="t-h">Mailcatcher (dev)</text>
+  <text x="335" y="162" text-anchor="middle" class="t-m">"Set your password" emails</text>
+  <text x="335" y="182" text-anchor="middle" class="t-m">view at localhost:1080</text>
+
+  <!-- Keycloak -->
+  <rect x="560" y="95" width="480" height="110" rx="12" fill="var(--kc)" stroke="var(--kc-b)" stroke-width="2"/>
+  <text x="800" y="130" text-anchor="middle" class="t-h">Keycloak · realm devplan</text>
+  <text x="800" y="156" text-anchor="middle" class="t-m">login (SSO) · roles: employee, manager, hr</text>
+  <text x="800" y="178" text-anchor="middle" class="t-m">user accounts · sends invite email · :8280</text>
+
+  <!-- Users -->
+  <rect x="30" y="300" width="200" height="190" rx="12" fill="var(--us)" stroke="var(--us-b)" stroke-width="2"/>
+  <text x="130" y="338" text-anchor="middle" class="t-h">Users</text>
+  <text x="130" y="374" text-anchor="middle" class="t-s">HR</text>
+  <text x="130" y="400" text-anchor="middle" class="t-s">Manager</text>
+  <text x="130" y="426" text-anchor="middle" class="t-s">Employee</text>
+  <text x="130" y="466" text-anchor="middle" class="note">in the browser</text>
+
+  <!-- Frontend -->
+  <rect x="300" y="285" width="320" height="220" rx="12" fill="var(--fe)" stroke="var(--fe-b)" stroke-width="2"/>
+  <text x="460" y="322" text-anchor="middle" class="t-h">devplan-frontend</text>
+  <text x="460" y="346" text-anchor="middle" class="t-m">React + JSONForms · nginx · :8090</text>
+  <text x="460" y="384" text-anchor="middle" class="t-s">My tasks · My plans · Employees</text>
+  <text x="460" y="408" text-anchor="middle" class="t-s">Task forms drawn with JSONForms</text>
+  <text x="460" y="432" text-anchor="middle" class="t-s">(form JSON comes from the case model)</text>
+  <text x="460" y="470" text-anchor="middle" class="note">nginx forwards /api to the backend</text>
+
+  <!-- Backend -->
+  <rect x="700" y="285" width="320" height="220" rx="12" fill="var(--be)" stroke="var(--be-b)" stroke-width="2"/>
+  <text x="860" y="322" text-anchor="middle" class="t-h">devplan-backend</text>
+  <text x="860" y="346" text-anchor="middle" class="t-m">Spring Boot · thin layer</text>
+  <text x="860" y="384" text-anchor="middle" class="t-s">Employee directory · who sees whom</text>
+  <text x="860" y="408" text-anchor="middle" class="t-s">Rules: one active plan per employee</text>
+  <text x="860" y="432" text-anchor="middle" class="t-s">HR: add employee</text>
+  <text x="860" y="470" text-anchor="middle" class="note">forwards the user's own token</text>
+
+  <!-- Engine -->
+  <rect x="1180" y="285" width="320" height="220" rx="12" fill="var(--en)" stroke="var(--en-b)" stroke-width="2"/>
+  <text x="1340" y="322" text-anchor="middle" class="t-h">CaseFabric engine</text>
+  <text x="1340" y="346" text-anchor="middle" class="t-m">CMMN · 1.1.35 · :2027</text>
+  <text x="1340" y="384" text-anchor="middle" class="t-s">Runs the Development case</text>
+  <text x="1340" y="408" text-anchor="middle" class="t-s">Stages · tasks · milestones · timers</text>
+  <text x="1340" y="432" text-anchor="middle" class="t-s">Case file = the plan data</text>
+  <text x="1340" y="470" text-anchor="middle" class="note">checks case roles on every call</text>
+
+  <!-- Wires: top -->
+  <line x1="560" y1="150" x2="474" y2="150" class="wire" marker-end="url(#a)"/>
+  <text x="517" y="140" text-anchor="middle" class="t-lbl">SMTP</text>
+
+  <line x1="590" y1="285" x2="590" y2="209" class="wire" marker-end="url(#a)"/>
+  <text x="580" y="250" text-anchor="end" class="t-lbl">Login</text>
+
+  <line x1="860" y1="285" x2="860" y2="209" class="wire" marker-end="url(#a)"/>
+  <text x="872" y="236" class="t-lbl">Verify token</text>
+  <text x="872" y="256" class="t-lbl">+ Admin API (add user)</text>
+
+  <path d="M1340,285 L1340,150 L1044,150" class="wire" marker-end="url(#a)"/>
+  <text x="1352" y="236" class="t-lbl">Verify token</text>
+
+  <!-- Wires: middle -->
+  <line x1="230" y1="395" x2="296" y2="395" class="wire" marker-end="url(#a)"/>
+  <line x1="620" y1="395" x2="696" y2="395" class="wire" marker-end="url(#a)"/>
+  <text x="658" y="384" text-anchor="middle" class="t-lbl">/api</text>
+  <text x="658" y="420" text-anchor="middle" class="t-lbl">+ token</text>
+
+  <line x1="1020" y1="395" x2="1176" y2="395" class="wire" marker-end="url(#a)" marker-start="url(#a)"/>
+  <text x="1090" y="372" text-anchor="middle" class="t-lbl">REST API</text>
+  <text x="1090" y="424" text-anchor="middle" class="note">start case</text>
+  <text x="1090" y="442" text-anchor="middle" class="note">complete task</text>
+  <text x="1090" y="460" text-anchor="middle" class="note">raise event</text>
+  <text x="1090" y="478" text-anchor="middle" class="note">read cases</text>
+
+  <!-- Postgres server -->
+  <rect x="600" y="575" width="930" height="195" rx="14" fill="var(--pg)" stroke="var(--db-b)" stroke-width="2" stroke-dasharray="7 5"/>
+  <text x="625" y="757" class="t-s" font-weight="700">PostgreSQL · one server (case-engine-db-postgres)</text>
+
+  <rect x="625" y="595" width="270" height="110" rx="10" fill="var(--db)" stroke="var(--db-b)" stroke-width="1.5"/>
+  <text x="760" y="627" text-anchor="middle" class="t-h">schema devplan</text>
+  <text x="760" y="653" text-anchor="middle" class="t-s">employee table only</text>
+  <text x="760" y="675" text-anchor="middle" class="t-m">name, title, manager, role</text>
+
+  <rect x="925" y="595" width="270" height="110" rx="10" fill="var(--db)" stroke="var(--db-b)" stroke-width="1.5"/>
+  <text x="1060" y="627" text-anchor="middle" class="t-h">keycloak DB</text>
+  <text x="1060" y="653" text-anchor="middle" class="t-s">users, passwords, roles</text>
+  <text x="1060" y="675" text-anchor="middle" class="t-m">realm settings</text>
+
+  <rect x="1225" y="595" width="285" height="110" rx="10" fill="var(--db)" stroke="var(--db-b)" stroke-width="1.5"/>
+  <text x="1367" y="627" text-anchor="middle" class="t-h">engine DBs</text>
+  <text x="1367" y="653" text-anchor="middle" class="t-s">eventstore: every case event</text>
+  <text x="1367" y="675" text-anchor="middle" class="t-s">query: cases, tasks, case file</text>
+
+  <!-- Wires: down -->
+  <line x1="760" y1="505" x2="760" y2="591" class="wire" marker-end="url(#a)"/>
+  <text x="772" y="548" class="t-lbl">JDBC · Flyway</text>
+
+  <path d="M1040,185 L1150,185 L1150,591" class="wire" marker-end="url(#a)"/>
+  <text x="1140" y="548" text-anchor="end" class="t-lbl">Keycloak data</text>
+
+  <line x1="1367" y1="505" x2="1367" y2="591" class="wire" marker-end="url(#a)"/>
+  <text x="1379" y="548" class="t-lbl">events + query data</text>
+
+  <!-- side note -->
+  <text x="40" y="600" class="t-s" font-weight="700">Where data lives</text>
+  <text x="40" y="626" class="note">App DB: who people are</text>
+  <text x="40" y="648" class="note">Case file: the plan (goals, rounds,</text>
+  <text x="40" y="668" class="note">approvals, evaluations)</text>
+  <text x="40" y="690" class="note">Keycloak: logins and roles</text>
+
+  <!-- Steps -->
+  <g transform="translate(30,790)">
+    <g>
+      <rect width="238" height="180" rx="12" fill="var(--paper)" stroke="var(--fe-b)"/>
+      <circle cx="28" cy="28" r="18" fill="var(--step)"/><text x="28" y="34" text-anchor="middle" style="fill:#fff" class="t-step">1</text>
+      <text x="119" y="76" text-anchor="middle" class="t-step">User logs in</text>
+      <text x="119" y="104" text-anchor="middle" class="note">HR, Manager or Employee</text>
+      <text x="119" y="124" text-anchor="middle" class="note">logs in once via Keycloak</text>
+      <text x="119" y="144" text-anchor="middle" class="note">and gets a token</text>
+    </g>
+    <g transform="translate(258,0)">
+      <rect width="238" height="180" rx="12" fill="var(--paper)" stroke="var(--fe-b)"/>
+      <circle cx="28" cy="28" r="18" fill="var(--step)"/><text x="28" y="34" text-anchor="middle" style="fill:#fff" class="t-step">2</text>
+      <text x="119" y="76" text-anchor="middle" class="t-step">React shows screens</text>
+      <text x="119" y="104" text-anchor="middle" class="note">Task forms come from the</text>
+      <text x="119" y="124" text-anchor="middle" class="note">case model, drawn with</text>
+      <text x="119" y="144" text-anchor="middle" class="note">JSONForms</text>
+    </g>
+    <g transform="translate(516,0)">
+      <rect width="238" height="180" rx="12" fill="var(--paper)" stroke="var(--fe-b)"/>
+      <circle cx="28" cy="28" r="18" fill="var(--step)"/><text x="28" y="34" text-anchor="middle" style="fill:#fff" class="t-step">3</text>
+      <text x="119" y="76" text-anchor="middle" class="t-step">Backend checks</text>
+      <text x="119" y="104" text-anchor="middle" class="note">Reads employee info,</text>
+      <text x="119" y="124" text-anchor="middle" class="note">applies the rules</text>
+      <text x="119" y="144" text-anchor="middle" class="note">(who may do what)</text>
+    </g>
+    <g transform="translate(774,0)">
+      <rect width="238" height="180" rx="12" fill="var(--paper)" stroke="var(--fe-b)"/>
+      <circle cx="28" cy="28" r="18" fill="var(--step)"/><text x="28" y="34" text-anchor="middle" style="fill:#fff" class="t-step">4</text>
+      <text x="119" y="76" text-anchor="middle" class="t-step">Backend calls engine</text>
+      <text x="119" y="104" text-anchor="middle" class="note">REST API with the user's</text>
+      <text x="119" y="124" text-anchor="middle" class="note">token: start case, complete</text>
+      <text x="119" y="144" text-anchor="middle" class="note">task, raise event</text>
+    </g>
+    <g transform="translate(1032,0)">
+      <rect width="238" height="180" rx="12" fill="var(--paper)" stroke="var(--fe-b)"/>
+      <circle cx="28" cy="28" r="18" fill="var(--step)"/><text x="28" y="34" text-anchor="middle" style="fill:#fff" class="t-step">5</text>
+      <text x="119" y="76" text-anchor="middle" class="t-step">Engine runs the case</text>
+      <text x="119" y="104" text-anchor="middle" class="note">Follows the CMMN model,</text>
+      <text x="119" y="124" text-anchor="middle" class="note">updates case file and tasks,</text>
+      <text x="119" y="144" text-anchor="middle" class="note">saves events</text>
+    </g>
+    <g transform="translate(1290,0)">
+      <rect width="250" height="180" rx="12" fill="var(--paper)" stroke="var(--fe-b)"/>
+      <circle cx="28" cy="28" r="18" fill="var(--step)"/><text x="28" y="34" text-anchor="middle" style="fill:#fff" class="t-step">6</text>
+      <text x="125" y="76" text-anchor="middle" class="t-step">UI shows new status</text>
+      <text x="125" y="104" text-anchor="middle" class="note">React shows the next task</text>
+      <text x="125" y="124" text-anchor="middle" class="note">and the current phase</text>
+      <text x="125" y="144" text-anchor="middle" class="note">(Plan · Perform · Evaluate)</text>
+    </g>
+  </g>
+</svg>
+</div>
+</body>
+</html>
