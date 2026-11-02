@@ -1,4 +1,4 @@
-<case xmlns="http://www.omg.org/spec/CMMN/20151109/MODEL" xmlns:cafienne="org.cafienne" id="development.case" name="development" expressionLanguage="spel">
+<case xmlns="http://www.omg.org/spec/CMMN/20151109/MODEL" xmlns:cafienne="org.cafienne" id="development.case" name="development" expressionLanguage="spel" guid="_LvCNu">
     <documentation textFormat="text/plain">
         <text><![CDATA[Development plan cycle as its own case, one per employee. The case file is the system of record for the whole plan; the devplan app only shows task inputs as forms and completes tasks with their output. The case is continuous: it has no completion milestone.]]></text>
     </documentation>
@@ -24,8 +24,7 @@
                         </condition>
                     </repetitionRule>
                 </itemControl>
-                <userEvent id="pi_start_plan" name="Start development plan" authorizedRoleRefs="cr_dv_Manager cr_dv_HR">
-                </userEvent>
+                <userEvent id="pi_start_plan" name="Start development plan" authorizedRoleRefs="cr_dv_Manager cr_dv_HR"/>
                 <stage id="pi_plan" name="1 · Plan" autoComplete="true">
                     <documentation textFormat="text/plain">
                         <text><![CDATA[Starts on Start development plan, or on Further development from the evaluation (a new round).]]></text>
@@ -63,11 +62,17 @@
                                 <body><![CDATA[replace]]></body>
                             </bindingRefinement>
                         </outputs>
+                        <outputs id="_LvCNu_12" name="Mentor" bindingRef="Mentor">
+                            <bindingRefinement id="_LvCNu_13">
+                                <body><![CDATA[replace]]></body>
+                            </bindingRefinement>
+                        </outputs>
                         <extensionElements mustUnderstand="false">
                             <cafienne:implementation xmlns:cafienne="org.cafienne" humanTaskRef="dv_define_plan.humantask">
                                 <parameterMapping id="pm_define_plan_in_Employee" sourceRef="in_define_plan_Employee" targetRef="i_Employee__define_plan"/>
                                 <parameterMapping id="pm_define_plan_in_Plan" sourceRef="in_define_plan_Plan" targetRef="i_Plan__define_plan"/>
                                 <parameterMapping id="pm_define_plan_out_Plan" sourceRef="o_Plan__define_plan" targetRef="out_define_plan_Plan"/>
+                                <parameterMapping id="_LvCNu_10" sourceRef="Mentor__uvQf" targetRef="_LvCNu_12"/>
                             </cafienne:implementation>
                         </extensionElements>
                     </humanTask>
@@ -99,11 +104,17 @@
                                 <body><![CDATA[replace]]></body>
                             </bindingRefinement>
                         </outputs>
+                        <outputs id="_LvCNu_22" name="Budget" bindingRef="Budget">
+                            <bindingRefinement id="_LvCNu_23">
+                                <body><![CDATA[replace]]></body>
+                            </bindingRefinement>
+                        </outputs>
                         <extensionElements mustUnderstand="false">
                             <cafienne:implementation xmlns:cafienne="org.cafienne" humanTaskRef="dv_approve_plan.humantask">
                                 <parameterMapping id="pm_approve_plan_in_Employee" sourceRef="in_approve_plan_Employee" targetRef="i_Employee__approve_plan"/>
                                 <parameterMapping id="pm_approve_plan_in_Plan" sourceRef="in_approve_plan_Plan" targetRef="i_Plan__approve_plan"/>
                                 <parameterMapping id="pm_approve_plan_out_Approval" sourceRef="o_Approval__approve_plan" targetRef="out_approve_plan_Approval"/>
+                                <parameterMapping id="_LvCNu_20" sourceRef="Budget__lePV" targetRef="_LvCNu_22"/>
                             </cafienne:implementation>
                         </extensionElements>
                     </humanTask>
@@ -265,7 +276,7 @@
                         </entryCriterion>
                     </milestone>
                     <planningTable id="pt_perform">
-                        <humanTask id="pi_projects_assignments" name="Projects and assignments" isBlocking="true" performerRef="cr_dv_Employee" authorizedRoleRefs="cr_dv_Employee cr_dv_Manager">
+                        <humanTask id="pi_projects_assignments" name="Projects and assignments" authorizedRoleRefs="cr_dv_Employee cr_dv_Manager" isBlocking="true" performerRef="cr_dv_Employee">
                             <documentation textFormat="text/plain">
                                 <text><![CDATA[Owner: Employee. Adds a PROJECT activity to Activities.]]></text>
                             </documentation>
@@ -285,7 +296,7 @@
                                 </cafienne:implementation>
                             </extensionElements>
                         </humanTask>
-                        <humanTask id="pi_training_learning" name="Training and learning" isBlocking="true" performerRef="cr_dv_Employee" authorizedRoleRefs="cr_dv_Employee cr_dv_Manager">
+                        <humanTask id="pi_training_learning" name="Training and learning" authorizedRoleRefs="cr_dv_Employee cr_dv_Manager" isBlocking="true" performerRef="cr_dv_Employee">
                             <documentation textFormat="text/plain">
                                 <text><![CDATA[Owner: Employee. Adds a TRAINING activity to Activities.]]></text>
                             </documentation>
@@ -305,7 +316,7 @@
                                 </cafienne:implementation>
                             </extensionElements>
                         </humanTask>
-                        <humanTask id="pi_coaching_mentoring" name="Coaching and mentoring" isBlocking="true" performerRef="cr_dv_Employee" authorizedRoleRefs="cr_dv_Employee cr_dv_Manager">
+                        <humanTask id="pi_coaching_mentoring" name="Coaching and mentoring" authorizedRoleRefs="cr_dv_Employee cr_dv_Manager" isBlocking="true" performerRef="cr_dv_Employee">
                             <documentation textFormat="text/plain">
                                 <text><![CDATA[Owner: Employee. Adds a COACHING activity to Activities.]]></text>
                             </documentation>

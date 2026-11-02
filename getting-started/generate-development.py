@@ -1,4 +1,9 @@
-"""Generates the development (Development plan cycle) CMMN source files for the CaseFabric Case Designer:
+"""RETIRED - do not run. The Case Designer is now the source of truth for the development model; running this script
+overwrites every Designer change (dv_*.humantask, development.case and development.type). It also still writes the
+old structure: one inline development.type, parameters without typeRef and a separate "jsonforms" copy of each form.
+Kept as a record of how the first version of the model was built.
+
+Generates the development (Development plan cycle) CMMN source files for the CaseFabric Case Designer:
 case, type, caseteam, dimensions and humantasks. Usage: python generate-development.py <definitions-dir>
 Removes dv_*.humantask files in <definitions-dir> that this generator no longer produces.
 

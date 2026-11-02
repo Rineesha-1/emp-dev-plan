@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { JsonForms } from '@jsonforms/react';
 import { MaterialArrayLayout, materialCells, materialRenderers } from '@jsonforms/material-renderers';
 import { isObjectArrayControl, rankWith } from '@jsonforms/core';
+import RjsfForm from '@rjsf/mui';
+import validator from '@rjsf/validator-ajv8';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { api } from './api.js';
 
@@ -37,7 +39,7 @@ const EVENT_HELP = {
   'Request early review': 'Review progress now instead of waiting for the next 14-day check.',
 };
 
-// MUI theme for the JSONForms material renderers, in the app's colours and type.
+// MUI theme for the RJSF and JSONForms material renderers, in the app's colours and type.
 const theme = createTheme({
   palette: { primary: { main: '#2E6B5A' }, error: { main: '#B3402F' }, text: { primary: '#17322A', secondary: '#5A6E66' } },
   typography: { fontFamily: "'Instrument Sans', system-ui, sans-serif" },
@@ -102,7 +104,7 @@ export default function App({ keycloak }) {
       </header>
       <main>
         {page === 'tasks' && !id && <TaskList />}
-        {page === 'tasks' && id && <TaskForm taskId={id} />}
+        {page === 'tasks' && id && <TaskForm taskId={id} me={me} />}
         {page === 'cases' && !id && <CaseList me={me} />}
         {page === 'cases' && id && <CaseDetail caseId={id} roles={roles} />}
         {page === 'employees' && isHr && <EmployeeAdmin />}
@@ -159,8 +161,38 @@ function TaskList() {
   );
 }
 
-/** Renders the task's JSON form (the task-model's "jsonforms" part) with JSONForms and submits it. */
-function TaskForm({ taskId }) {
+/** True when the object, or anything nested in it, has one of the given keys. */
+function hasProperties(object, ...names) {
+  if (!object || typeof object !== 'object') return false;
+  return Object.keys(object).some((key) => names.includes(key) || hasProperties(object[key], ...names));
+}
+
+/**
+ * Which renderer a task-model asks for, decided as the CaseFabric Case UI does: no "schema" means no form; RJSF is the
+ * default, JSONForms is used when the uiSchema has JSONForms layout keys and no RJSF keys.
+ */
+function formKind(model) {
+  if (!model || typeof model !== 'object' || !model.schema) return 'none';
+  const ui = model.uiSchema;
+  const rjsf = hasProperties(ui, 'ui:widget', 'ui:order', 'ui:readonly');
+  return rjsf || !hasProperties(ui, 'type', 'elements', 'rule') ? 'rjsf' : 'jsonforms';
+}
+
+/** The schema with "$CURRENT_USER" values replaced by the signed-in user's id, as in the Case UI. */
+function withCurrentUser(value, userId) {
+  if (value === '$CURRENT_USER') return userId;
+  if (Array.isArray(value)) return value.map((v) => withCurrentUser(v, userId));
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, withCurrentUser(v, userId)]));
+  }
+  return value;
+}
+
+/**
+ * Renders the task's form straight from its task-model ("schema" + "uiSchema", RJSF or JSONForms) and completes the
+ * task with the whole form. A parameter added to the human task model shows up here without changes to the app.
+ */
+function TaskForm({ taskId, me }) {
   const [form, loadError] = useLoad(`/tasks/${taskId}`);
   const [data, setData] = useState(null);
   const [errors, setErrors] = useState([]);
@@ -172,15 +204,16 @@ function TaskForm({ taskId }) {
   if (!form || !data) return <p className="muted">Loading the form…</p>;
   const task = form.task;
   const open = OPEN_TASK.includes(task.taskState);
+  const model = form.taskModel;
+  const kind = formKind(model);
+  // The page shows the form's title and description itself, so the renderer gets the schema without them.
+  const { title, description, ...schema } = withCurrentUser(model?.schema ?? {}, me?.userId);
+  const submitLabel = model?.submitLabel || 'Submit';
 
-  // Validation messages stay hidden until the first submit attempt.
-  const submit = (event) => {
-    event.preventDefault();
-    setSubmitted(true);
-    if (errors.length > 0) return;
+  const complete = (formData) => {
     setBusy(true);
     setError(null);
-    api('POST', `/tasks/${taskId}/complete`, data)
+    api('POST', `/tasks/${taskId}/complete`, formData)
       .then(() => {
         flash = `${task.taskName}: saved.`;
         window.location.hash = `#/cases/${task.caseInstanceId}`;
@@ -188,28 +221,59 @@ function TaskForm({ taskId }) {
       .catch((e) => { setError(e.message); setBusy(false); });
   };
 
+  // Validation messages stay hidden until the first submit attempt.
+  const submitJsonForms = (event) => {
+    event.preventDefault();
+    setSubmitted(true);
+    if (errors.length > 0) return;
+    complete(data);
+  };
+
+  const actions = open && (
+    <div className="form-actions">
+      <button type="submit" className="primary" disabled={busy}>{busy ? 'Saving…' : submitLabel}</button>
+      <a href={`#/cases/${task.caseInstanceId}`}>Cancel</a>
+    </div>
+  );
+  const messages = (
+    <>
+      {submitted && errors.length > 0 && <Problem message="Some fields still need an answer. They are marked in red." />}
+      <Problem message={error} />
+    </>
+  );
+
   return (
     <section className="task">
       <a className="back" href={`#/cases/${task.caseInstanceId}`}>← {form.employeeName ? `${form.employeeName}'s plan` : 'Back to the plan'}</a>
-      <form onSubmit={submit} noValidate>
-        <h1>{form.schema.title}</h1>
-        {form.schema.description && <p className="lead">{form.schema.description}</p>}
-        {!open && <p className="flash">This task is done. You are looking at what was filled in.</p>}
-        <ThemeProvider theme={theme}>
-          <JsonForms schema={form.schema} uischema={form.uischema} data={data} renderers={renderers}
-                     cells={materialCells} readonly={!open || busy}
-                     validationMode={submitted ? 'ValidateAndShow' : 'ValidateAndHide'}
-                     onChange={({ data: changed, errors: found }) => { setData(changed); setErrors(found ?? []); }} />
-        </ThemeProvider>
-        {submitted && errors.length > 0 && <Problem message="Some fields still need an answer. They are marked in red." />}
-        <Problem message={error} />
-        {open && (
-          <div className="form-actions">
-            <button type="submit" className="primary" disabled={busy}>{busy ? 'Saving…' : form.submitLabel}</button>
-            <a href={`#/cases/${task.caseInstanceId}`}>Cancel</a>
-          </div>
+      <h1>{title || task.taskName}</h1>
+      {description && <p className="lead">{description}</p>}
+      {!open && <p className="flash">This task is done. You are looking at what was filled in.</p>}
+      <ThemeProvider theme={theme}>
+        {kind === 'rjsf' && (
+          <RjsfForm schema={schema} uiSchema={model.uiSchema || {}} formData={data} validator={validator}
+                    readonly={!open || busy} noHtml5Validate showErrorList={false} liveValidate={submitted}
+                    onChange={(e) => { setData(e.formData); setErrors(e.errors ?? []); }}
+                    onError={(found) => { setSubmitted(true); setErrors(found); }}
+                    onSubmit={(e) => { setErrors([]); complete(e.formData); }}>
+            {/* Children replace RJSF's own submit button. */}
+            {messages}
+            {actions}
+          </RjsfForm>
         )}
-      </form>
+        {kind !== 'rjsf' && (
+          <form onSubmit={submitJsonForms} noValidate>
+            {kind === 'jsonforms' && (
+              <JsonForms schema={schema} uischema={model.uischema || model.uiSchema} data={data} renderers={renderers}
+                         cells={materialCells} readonly={!open || busy}
+                         validationMode={submitted ? 'ValidateAndShow' : 'ValidateAndHide'}
+                         onChange={({ data: changed, errors: found }) => { setData(changed); setErrors(found ?? []); }} />
+            )}
+            {kind === 'none' && <p className="muted">This task has no form. Press {submitLabel} to complete it.</p>}
+            {messages}
+            {actions}
+          </form>
+        )}
+      </ThemeProvider>
     </section>
   );
 }

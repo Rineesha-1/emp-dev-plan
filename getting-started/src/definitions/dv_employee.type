@@ -1,0 +1,10 @@
+<type xmlns="http://www.omg.org/spec/CMMN/20151109/MODEL" xmlns:cafienne="org.cafienne" id="dv_employee.type" name="dv_employee">
+    <schema>
+        <property id="sp_Employee_employeeId" name="employeeId" type="string" multiplicity="ZeroOrOne" />
+        <property id="sp_Employee_name" name="name" type="string" multiplicity="ZeroOrOne" />
+        <property id="sp_Employee_jobTitle" name="jobTitle" type="string" multiplicity="ZeroOrOne" />
+        <property id="sp_Employee_managerId" name="managerId" type="string" multiplicity="ZeroOrOne" />
+        <property id="sp_Employee_managerName" name="managerName" type="string" multiplicity="ZeroOrOne" />
+        <property id="sp_Employee_trigger" name="trigger" type="string" multiplicity="ZeroOrOne" />
+    </schema>
+</type>

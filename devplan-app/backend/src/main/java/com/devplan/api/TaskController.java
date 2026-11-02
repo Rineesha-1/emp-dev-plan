@@ -24,9 +24,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
- * Human tasks with their JSON forms; a thin layer over the engine. The form (task-model "jsonforms") and its data (the
- * task input, mapped from the case file by the engine) both come from the engine task; completing sends the form's
- * output field back, and the engine's output mappings write it to the case file. Nothing here is task-specific.
+ * Human tasks with their forms; a thin layer over the engine that works like the CaseFabric Case UI. The form (the
+ * task-model) and its data (the task input, mapped from the case file by the engine) both come from the engine task;
+ * completing sends the whole form back, and the engine's output mappings write the output parameters to the case
+ * file. Nothing here is task-specific: a parameter added to a human task in the Case Designer needs no change here.
  */
 @RestController
 @RequestMapping("/api/tasks")
@@ -58,33 +59,27 @@ public class TaskController {
                 .toList();
     }
 
-    /** The form and its data: the task input, with the submitted output for a completed task. */
+    /**
+     * The task-model as is and its form data, as the CaseFabric Case UI takes it: the task output once something was
+     * submitted, otherwise the task input. Empty values are left out, so the form starts them from the schema.
+     */
     @GetMapping("/{taskId}")
     public Map<String, Object> form(@PathVariable String taskId) {
         JsonNode task = engine.get("/tasks/" + taskId);
-        JsonNode model = taskModel(task);
-        JsonNode form = model.path("jsonforms");
-        String output = model.path("output").asText();
-
+        JsonNode output = task.path("output");
+        JsonNode source = output.isObject() && !output.isEmpty() ? output : task.path("input");
         ObjectNode formData = json.createObjectNode();
-        task.path("input").properties().forEach(p -> {
+        source.properties().forEach(p -> {
             if (!p.getValue().isNull()) {
                 formData.set(p.getKey(), p.getValue());
             }
         });
-        JsonNode submitted = task.path("output").path(output);
-        if (!submitted.isMissingNode() && !submitted.isNull()) {
-            formData.set(output, submitted);
-        }
-        formData.set(output, withDefaults(formData.path(output), form.path("schema").path("properties").path(output)));
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("task", ((ObjectNode) task.deepCopy()).without(List.of("taskModel", "input", "output")));
         result.put("employeeName", formData.has("Employee") ? formData.path("Employee").path("name").asText(null)
                 : employeeName(task.path("caseInstanceId").asText()));
-        result.put("schema", form.path("schema"));
-        result.put("uischema", form.path("uischema"));
-        result.put("submitLabel", form.path("submitLabel").asText("Complete task"));
+        result.put("taskModel", taskModel(task));
         result.put("formData", formData);
         return result;
     }
@@ -93,33 +88,20 @@ public class TaskController {
         return engine.get("/cases/" + caseId).path("file").path("Employee").path("name").asText(null);
     }
 
-    /** The output value for JSONForms: an empty list, or the object with the schema's defaults for missing fields. */
-    private JsonNode withDefaults(JsonNode value, JsonNode schema) {
-        if ("array".equals(schema.path("type").asText())) {
-            return value.isArray() ? value : json.createArrayNode();
-        }
-        ObjectNode data = value.isObject() ? ((ObjectNode) value).deepCopy() : json.createObjectNode();
-        schema.path("properties").properties().forEach(p -> {
-            if (p.getValue().has("default") && !data.has(p.getKey())) {
-                data.set(p.getKey(), p.getValue().get("default"));
-            }
-        });
-        return data;
-    }
-
-    /** Completes the engine task with the form's output field; the engine writes it to the case file. */
+    /**
+     * Completes the engine task with the whole form, as the Case UI does. The engine keeps the fields named after the
+     * task's output parameters and its output mappings write them to the case file.
+     */
     @PostMapping("/{taskId}/complete")
     public void complete(@PathVariable String taskId, @RequestBody JsonNode formData) {
-        JsonNode task = engine.get("/tasks/" + taskId);
-        String output = taskModel(task).path("output").asText();
-        JsonNode data = formData.path(output);
-        if (!data.isObject() && !data.isArray()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Form field '" + output + "' is missing");
+        if (!formData.isObject()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The form data must be an object");
         }
+        JsonNode task = engine.get("/tasks/" + taskId);
         if ("Unassigned".equals(task.path("taskState").asText())) {
             engine.put("/tasks/" + taskId + "/claim", null);
         }
-        engine.post("/tasks/" + taskId + "/complete", json.createObjectNode().set(output, data));
+        engine.post("/tasks/" + taskId + "/complete", formData);
     }
 
     private JsonNode taskModel(JsonNode task) {
