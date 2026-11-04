@@ -18,7 +18,12 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.devplan.config.CurrentUser;
 import com.devplan.config.DevplanProperties;
+import com.devplan.data.Employees;
 import com.devplan.engine.EngineClient;
+import com.devplan.forms.FormContext;
+import com.devplan.forms.FormContext.Mode;
+import com.devplan.forms.FormLayer;
+import com.devplan.onboarding.Checklists;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -28,6 +33,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * task-model) and its data (the task input, mapped from the case file by the engine) both come from the engine task;
  * completing sends the whole form back, and the engine's output mappings write the output parameters to the case
  * file. Nothing here is task-specific: a parameter added to a human task in the Case Designer needs no change here.
+ * <p>
+ * Business data goes through the FormLayer: properties the task-model marks with "x-store" are read from and saved
+ * to the app database (merged into the form on read, split off on write), so personal data never reaches the case
+ * file; fields marked "x-case" also go to the case file. Task-models without "x-store" pass through unchanged.
  */
 @RestController
 @RequestMapping("/api/tasks")
@@ -37,11 +46,18 @@ public class TaskController {
     private final DevplanProperties props;
     private final EngineClient engine;
     private final ObjectMapper json;
+    private final FormLayer forms;
+    private final Checklists checklists;
+    private final Employees employees;
 
-    public TaskController(DevplanProperties props, EngineClient engine, ObjectMapper json) {
+    public TaskController(DevplanProperties props, EngineClient engine, ObjectMapper json, FormLayer forms,
+                          Checklists checklists, Employees employees) {
         this.props = props;
         this.engine = engine;
         this.json = json;
+        this.forms = forms;
+        this.checklists = checklists;
+        this.employees = employees;
     }
 
     /** Open tasks for one of the user's case roles, each with the name of the employee whose plan it is. */
@@ -75,13 +91,39 @@ public class TaskController {
             }
         });
 
+        JsonNode model = taskModel(task);
+        FormContext ctx = forms.forRead(model, context(task));
+        forms.merge(model, formData, ctx);
+
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("task", ((ObjectNode) task.deepCopy()).without(List.of("taskModel", "input", "output")));
-        result.put("employeeName", formData.has("Employee") ? formData.path("Employee").path("name").asText(null)
-                : employeeName(task.path("caseInstanceId").asText()));
-        result.put("taskModel", taskModel(task));
+        String employeeName = formData.path("Employee").path("name").asText(null);
+        if (employeeName == null && ctx.employeeId() != null) {
+            employeeName = employees.byId(ctx.employeeId()).map(e -> e.name()).orElse(null);
+        }
+        result.put("employeeName", employeeName != null ? employeeName : employeeName(task.path("caseInstanceId").asText()));
+        result.put("employeeId", ctx.employeeId());
+        result.put("taskModel", forms.prepareModel(model, ctx));
         result.put("formData", formData);
+        result.put("editable", forms.editableAfterCompletion(model)); // its DB data can still be changed after completion
+        // While the employee is onboarding, a task shows the checklist items of its role (e.g. IT's accounts).
+        String owner = Checklists.ownerRoleOfCaseRole(task.path("role").asText());
+        if (ctx.employeeId() != null && owner != null && !"HR".equals(owner) && employees.byId(ctx.employeeId())
+                .map(e -> "ONBOARDING".equals(e.stage())).orElse(false)) {
+            result.put("checklist", checklists.of(ctx.employeeId(), owner));
+        }
         return result;
+    }
+
+    /** The case and the employee the task is about: Employee.employeeId of its input (the case file as fallback). */
+    private FormContext context(JsonNode task) {
+        String caseId = task.path("caseInstanceId").asText();
+        String employeeId = task.path("input").path("Employee").path("employeeId").asText(null);
+        if (employeeId == null || employeeId.isBlank()) {
+            employeeId = engine.get("/cases/" + caseId).path("file").path("Employee").path("employeeId").asText(null);
+        }
+        return new FormContext(caseId, employeeId, CurrentUser.get(), task.path("id").asText(),
+                OPEN.contains(task.path("taskState").asText()), null);
     }
 
     private String employeeName(String caseId) {
@@ -98,10 +140,31 @@ public class TaskController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The form data must be an object");
         }
         JsonNode task = engine.get("/tasks/" + taskId);
-        if ("Unassigned".equals(task.path("taskState").asText())) {
-            engine.put("/tasks/" + taskId + "/claim", null);
+        ObjectNode output = forms.split(taskModel(task), (ObjectNode) formData, context(task), Mode.COMPLETE);
+        claim(task);
+        engine.post("/tasks/" + taskId + "/complete", output);
+    }
+
+    /**
+     * Changes the DB data of a completed task (e.g. Step 1 opened again from the wizard). Only HR, and only the
+     * x-store parts: the case file is not touched and no actions run.
+     */
+    @PostMapping("/{taskId}/business-data")
+    public void editBusinessData(@PathVariable String taskId, @RequestBody JsonNode formData) {
+        if (!CurrentUser.get().has("hr")) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only HR can change this after the task is done");
         }
-        engine.post("/tasks/" + taskId + "/complete", formData);
+        if (!formData.isObject()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The form data must be an object");
+        }
+        JsonNode task = engine.get("/tasks/" + taskId);
+        forms.split(taskModel(task), (ObjectNode) formData, context(task), Mode.EDIT);
+    }
+
+    private void claim(JsonNode task) {
+        if ("Unassigned".equals(task.path("taskState").asText())) {
+            engine.put("/tasks/" + task.path("id").asText() + "/claim", null);
+        }
     }
 
     private JsonNode taskModel(JsonNode task) {

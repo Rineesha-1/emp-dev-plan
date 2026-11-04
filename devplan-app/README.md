@@ -9,25 +9,26 @@ Browser ──► frontend (nginx :8090) ──/api──► backend (Spring Boo
 ```
 
 - **Keycloak** (realm `devplan`) is the only login: for this app, the engine, the engine's Swagger UI and the CaseFabric Case UI.
-- **The case engine is the system of record.** The case file holds the whole development plan:
+- **Business data in the app database, case data in the case file.** For the development plan:
 
-  | Case file item | What | Written by |
-  |---|---|---|
-  | `Employee` | name, job title, manager, reason for the plan | case start |
-  | `Plan` | period and goals (title, type, description, success criteria, target date) | Define / Revise plan |
-  | `Approval` | decision and comments | Approve plan |
-  | `Activities` (list) | project, training or coaching: description, goal, due date, status, outcome | the three activity tasks (appended) |
-  | `ProgressReviews` (list) | date, on track, notes, adjustments, plan completed | Review progress (appended) |
-  | `SelfAssessment` | result per goal, summary | Self-assessment |
-  | `Evaluation` | outcome, summary, result per goal, further development | Evaluate & document results |
-  | `PreviousRounds` (list) | a copy of each finished round | Evaluate & document results |
+  | Case file item | In the case file | In the app DB (`devplan` schema) | Written by |
+  |---|---|---|---|
+  | `Employee` | id, name, job title, manager, reason | (employee directory) | case start |
+  | `Plan` | roundId, roundNo, period, goals: title, type, target date | `dev_round.period`, `dev_goal` (all goal fields, plus description, success criteria) | Define / Revise plan |
+  | `Approval` | decision, decidedBy | `dev_round.approval_decision`, `approval_comments` | Approve plan |
+  | `Activities` (list) | activityId, type, related goal, status, due date | `dev_activity` (plus description, outcome) | the three activity tasks |
+  | `ProgressReviews` (list) | date, on track, plan completed | `dev_progress_review` (plus notes, adjustments) | Review progress |
+  | `SelfAssessment` | submitted, result per goal | `dev_goal.self_result`, `self_comments`, `dev_round.self_summary` | Self-assessment |
+  | `Evaluation` | outcome, further development, result per goal | `dev_goal.eval_*`, `dev_round.eval_outcome`, `eval_summary`, `further_development` | Evaluate & document results |
 
-  - Every task gets its data from the case file through **input mappings** and writes its form back through **output mappings**. Single items are replaced (binding refinement `replace`), lists are appended to.
-  - The engine also pre-fills forms: one row per goal in the self-assessment and evaluation, and the last plan when a new round starts. List inputs show only the current round's activities and reviews.
+  - The database keeps the full record of every round (`dev_round`, one row per round; earlier rounds are the `CLOSED` rows). `PreviousRounds` is gone from the case file.
+  - A new round starts empty: *Define goals & plan* gets no earlier plan; activities and reviews shown are the round's own. Earlier rounds are only on the plan page's *Plan record* tab.
+  - The case file keeps what the sentries need (`Approval.decision`, `ProgressReviews.planCompleted`, `Evaluation.furtherDevelopment`) and what the case history should show (goal titles, statuses, results).
+  - Which field goes where is set in the task-model (`x-store`, `x-case`, `x-column`), see "The form layer" below.
+  - Running cases from before this change were copied with `getting-started/copy-development-plans-to-db.py` and moved to the new model with `migrate-development-cases.py`. Their older case file entries still hold the full old data.
 - **Thin backend**: no business data and no code per task.
   - Tasks work as in the CaseFabric Case UI: form = the task-model; form data = the engine task's `output` once something was submitted, otherwise its `input`; *Submit* sends the whole form to the engine, whose output mappings write the output parameters to the case file.
   - Case pages show the engine case (case file, plan items, tasks) as it is.
-  - The only table left is the employee directory (`devplan.employee`), used to start a case (employee, manager, job title, Keycloak ids).
 - **JSON forms**: each task's form is the `task-model` in its `.humantask` file (`getting-started/src/definitions/dv_*.humantask`): `schema` + `uiSchema`, and an optional `submitLabel` for the button.
   - Rendered as the Case UI does: with [RJSF](https://rjsf-team.github.io/react-jsonschema-form/) (MUI theme) by default, or with [JSONForms](https://jsonforms.io) when the `uiSchema` is a JSONForms layout (`type` / `elements`). `$CURRENT_USER` in the schema becomes the signed-in user's id.
   - Each task parameter has a `typeRef` to its `dv_*.type` file, so the Designer can generate the schema.
@@ -101,6 +102,80 @@ After changing `src/keycloak/devplan-realm.json`, run `docker compose up -d --fo
    - *Further development needed* starts a new round, which starts from the last plan; the finished round is kept under *Earlier rounds*.
    - Otherwise the plan is closed, and a new one can be started.
 
+## Onboarding a new joiner (FRD-02, reduced)
+
+The `development` case has a stage **0 · Onboarding** before everything else. After onboarding, nothing starts by
+itself: the case page shows the **Development plan cycle** with its *Start development plan* button. (A stage added
+at the top level of the case model shows up there as its own card with its start events, without UI changes.)
+
+Left out on purpose: probation, contract (incl. start date), verification and contract upload, onboarding templates
+(one fixed default checklist instead), due dates, timers, e-mails other than Keycloak's set-password mail, the policy
+pop-up (policies are plain ticks).
+
+1. **sridhar_hr**: *Employees* → **+ New Employee**. The backend makes a DRAFT employee row and starts the case; the
+   case file item `Onboarding` is created, which starts the Onboarding stage.
+2. **Step 1 · Employee details** (HR task): personal details (address optional), role and reporting. *Save &
+   continue* creates the Keycloak account (set-password mail to the private address; Keycloak sends it through the CaseFabric mailcatcher, `mailcatcher:1025`, so it shows up at http://localhost:1080), the
+   checklist, and adds the employee and manager to the case team. *Cancel* on a draft ends the case and deletes it.
+3. **Step 2 · IT & equipment request** (HR task) → *Send to IT*. IT's checklist then becomes exactly the request: the
+   laptop, each selected accessory and each selected account (all mandatory); unselected default IT items are removed.
+4. **kevin_it**: *My Tasks* shows one **Equipment request** per new joiner; IT's checklist items are checkboxes inside
+   it, not separate rows. Record issued equipment (asset register; ticks the matching item), tick the accounts →
+   *Mark setup done* (refused while a mandatory IT item is open).
+5. **New joiner**: *Dashboard* with their own items only; **Confirm equipment received** task.
+6. HR can still tick or add items on the wizard's checklist (the manager and HR have no default items).
+7. **sridhar_hr**: wizard → *Checklist* → **Complete onboarding** (enabled when every mandatory item is done) →
+   milestone *Employee onboarded*, employee stage *Active*.
+
+### Mails (process tasks in the case model)
+
+| Process task | When | To | Content |
+|---|---|---|---|
+| **Send welcome e-mail** (`dv_mail_welcome.process`) | Employee details completed | the joiner's private e-mail | username, login link (the password link comes separately from Keycloak) |
+| **Notify IT** (`dv_mail_it_request.process`) | IT & equipment request completed | the IT admin | a new equipment request is waiting |
+| **Send onboarding complete e-mail** (`dv_mail_onboarded.process`) | the Onboarding stage ends | HR, manager in cc | the joiner is onboarded |
+
+Recipients come from the `Onboarding` case file item (`employeeEmail`, `username`, `managerEmail`, `hrEmail`,
+`itEmail`), which the backend fills when Employee details is completed. Engine 1.1.35 has no mail process
+implementation, so these are HTTP process tasks: the engine posts the mail (subject and body are in the `.process`
+file) to the backend's `/internal/mail` relay (docker network only, shared `X-Mail-Token`), which sends it through the
+mailcatcher (http://localhost:1080).
+
+**Username**: `firstname.lastname` in lower-case ASCII (accents removed), with a number added when it is taken
+(`priya.sharma`, `priya.sharma2`). It is shown in the wizard header and in the welcome mail.
+
+### Where the data lives
+
+| App database (`devplan` schema) — business and personal data | Case file — only what the engine's sentries need |
+|---|---|
+| `employee`: personal details, role, manager, buddy, `stage` (DRAFT / ONBOARDING / ACTIVE), `case_id` | `Employee`: employeeId, name, job title, manager (as before; the development stage needs it) |
+| `onboarding`: IT request (`it_*`), IT status, equipment note, completion | `Onboarding`: itRequestSent, mandatoryItemsDone, completed |
+| `checklist_default_item` (the one default list), `checklist_item` (per joiner), `asset` | |
+| `department`, `job_title` (dropdown lookups) | |
+
+### The form layer: forms from the engine, data from the database
+
+Every onboarding form is still the `task-model` of its `.humantask` (`dv_employee_details`, `dv_it_request`,
+`dv_equipment_request`, `dv_confirm_equipment`); the app has no hand-coded forms. Three extra keys in the schema tell
+the backend (`forms/FormLayer.java`) which data is not case data:
+
+| Key | On | Meaning |
+|---|---|---|
+| `"x-store": "<table>"` (`employee`, `onboarding`, `dev_round`, `dev_activity`, ...; `assets` is special) | a top-level property, or a list inside a stored object (`Plan.goals` → `dev_goal`) | Its value lives in that app table. Read: merged into the form data. Write: saved to the DB; only its `x-case` fields go to the engine. Property names map to columns: `privateEmail` → `private_email`. The row: per task (`task_id` column), the plan round (`dev_round`), or the employee. Lists: the round's rows, in `seq` order; `"x-rows": "update"` only updates existing rows (per-goal results). |
+| `"x-case": true` | a field inside a stored property | The field is also sent to the case file. |
+| `"x-column": "<column>"` | a field | Its column, when it is not the field name in snake_case (`result` → `self_result`). |
+| `"x-options": "managers"` / `"buddies"` / `"departments"` / `"jobTitles"` / `"goals"` | a field | The backend fills `oneOf` from the DB (`forms/Lookups.java`). |
+| `"x-on-complete": "createEmployee"` / `"sendToIt"` / `"itSetupDone"` / `"confirmEquipment"` / `"submitPlan"` / `"decidePlan"` / `"addActivity"` / `"addReview"` / `"submitSelfAssessment"` / `"closeRound"` | a stored property | Backend action run on complete (`forms/OnboardingActions.java`, `forms/DevelopmentActions.java`); it may return case outputs (e.g. `Plan.roundId`). |
+
+Plus the uiSchema option `"table": true` on a list of objects (an
+editable table instead of expandable rows; used for issued equipment, goals, activities). A task-model without these keys passes through unchanged. There is no
+Save draft: a form is saved when its task is completed.
+
+What changes without UI code: fields, labels, layout and required rules in a task-model; a new DB field (add the
+column with Flyway, add the property to the task-model — no Java); a new human task (My Tasks, generic form); a new
+HR task in the Onboarding stage (becomes a wizard step); a new top-level stage with a start event (becomes a stage card
+on the case page). Hand-built: the checklist, the employee dashboard and the employees list.
+
 ## Change the model or the forms
 
 The Case Designer (http://localhost:2081) is the source of truth for `getting-started/src/definitions`. A change to a human task shows up in this app without code changes, as in the CaseFabric Case UI:
@@ -132,4 +207,6 @@ python migrate-development-cases.py              # optional: move running cases 
 | Engine calls | `backend/.../engine/EngineClient.java` (token forwarding, read-your-writes header), `TenantRegistrar.java` |
 | Database | `backend/src/main/resources/db/migration` (Flyway; V3 drops the old form tables, the employee directory stays) |
 | Containers | `docker-compose.yml`, `frontend/Dockerfile` + `frontend/nginx.conf`, `backend/Dockerfile` |
-| Browser app | `frontend/src/App.jsx` (pages: My tasks, Plans, plan page with the Plan → Perform → Evaluate strip, task form), `styles.css`, `api.js`, `main.jsx` (Keycloak login) |
+| Form layer | `backend/.../forms` (`FormLayer`, `TableStore`, `AssetStore`, `Lookups`, `StoreRules`, `OnboardingActions`) |
+| Onboarding | `backend/.../api/OnboardingController.java`, `backend/.../onboarding/Checklists.java`, migration `V6__onboarding.sql` |
+| Browser app | `frontend/src/App.jsx` (WF-02 shell, My Tasks, cases, case page with stage cards), `TaskForm.jsx` (generic engine form), `Onboarding.jsx` (employees, wizard, dashboard), `Checklist.jsx`, `shared.jsx`, `styles.css` (WF-02 design tokens), `api.js`, `main.jsx` (Keycloak login) |

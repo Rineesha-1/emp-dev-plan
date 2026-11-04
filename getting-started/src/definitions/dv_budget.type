@@ -1,5 +1,0 @@
-<type xmlns="http://www.omg.org/spec/CMMN/20151109/MODEL" xmlns:cafienne="org.cafienne" id="dv_budget.type" name="dv_budget">
-    <schema>
-        <property id="sp__abvEY_0" name="amount" type="number" multiplicity="ExactlyOne"/>
-    </schema>
-</type>

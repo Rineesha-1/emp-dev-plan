@@ -61,6 +61,11 @@ public class KeycloakAdminClient {
                 .build(userId), List.of("UPDATE_PASSWORD"));
     }
 
+    /** The user's e-mail address in Keycloak ("" when none). */
+    public String email(String userId) {
+        return getJson("/users/" + userId).path("email").asText("");
+    }
+
     /** Best-effort cleanup when a later onboarding step fails after the Keycloak user was already created. */
     public void deleteUser(String userId) {
         exchange(HttpMethod.DELETE, "/users/" + userId, null);

@@ -37,6 +37,7 @@ Use these in the Development plan app, the Case UI and Swagger.
 |---|---|---|
 | `rahul_mngr` | `rahul_mngr` | Manager |
 | `sridhar_hr` | `sridhar_hr` | HR |
+| `kevin_it` | `kevin_it` | IT admin (onboarding: equipment and accounts) |
 | `shanmuk_emp` | `shanmuk_emp` | Employee |
 | `kaustubh_emp` | `kaustubh_emp` | Employee |
 

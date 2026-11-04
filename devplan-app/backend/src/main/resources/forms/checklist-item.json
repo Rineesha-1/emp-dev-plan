@@ -1,0 +1,40 @@
+{
+  "schema": {
+    "title": "Checklist item",
+    "type": "object",
+    "required": ["name", "section", "ownerRole", "mandatory"],
+    "properties": {
+      "name": { "type": "string", "title": "Item" },
+      "section": {
+        "type": "string", "title": "Section",
+        "oneOf": [
+          { "const": "DOCUMENTS_ADMIN", "title": "Documents & admin" },
+          { "const": "EQUIPMENT_ISSUED", "title": "Equipment issued" },
+          { "const": "ACCOUNTS_INSTALLATIONS", "title": "Accounts & installations" },
+          { "const": "ORIENTATION", "title": "Orientation" }
+        ]
+      },
+      "ownerRole": {
+        "type": "string", "title": "Owner",
+        "oneOf": [
+          { "const": "HR", "title": "HR" },
+          { "const": "IT_ADMIN", "title": "IT admin" },
+          { "const": "MANAGER", "title": "Manager" },
+          { "const": "EMPLOYEE", "title": "Employee" }
+        ]
+      },
+      "mandatory": { "type": "boolean", "title": "Mandatory", "default": true }
+    }
+  },
+  "uiSchema": {
+    "type": "VerticalLayout",
+    "elements": [
+      { "type": "Control", "scope": "#/properties/name" },
+      { "type": "HorizontalLayout", "elements": [
+        { "type": "Control", "scope": "#/properties/section" },
+        { "type": "Control", "scope": "#/properties/ownerRole" } ] },
+      { "type": "Control", "scope": "#/properties/mandatory" }
+    ]
+  },
+  "submitLabel": "Save"
+}
