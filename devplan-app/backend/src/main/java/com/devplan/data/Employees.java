@@ -12,11 +12,13 @@ import com.devplan.config.CurrentUser;
 @Repository
 public class Employees {
 
+    /** stage: DRAFT (new joiner, Step 1 not done), ONBOARDING or ACTIVE; caseId: the new joiner's case. */
     public record Employee(String employeeId, String name, String jobTitle, String username, String userId,
-                           String managerId, String role) {
+                           String managerId, String role, String employeeCode, String stage, String caseId) {
     }
 
-    private static final String SELECT = "SELECT employee_id, name, job_title, username, user_id, manager_id, role FROM employee ";
+    private static final String SELECT = "SELECT employee_id, name, job_title, username, user_id, manager_id, role, "
+            + "employee_code, stage, case_id FROM employee ";
 
     private final JdbcClient db;
 
@@ -39,13 +41,17 @@ public class Employees {
         db.sql("INSERT INTO employee (employee_id, name, job_title, username, user_id, manager_id, role) "
                         + "VALUES (?, ?, ?, ?, ?, ?, ?)")
                 .params(employeeId, name, jobTitle, username, userId, managerId, role).update();
-        return new Employee(employeeId, name, jobTitle, username, userId, managerId, role);
+        return new Employee(employeeId, name, jobTitle, username, userId, managerId, role, null, "ACTIVE", null);
     }
 
-    /** HR sees everyone, a manager their direct reports, an employee themselves. */
+    public Optional<Employee> byUserId(String userId) {
+        return db.sql(SELECT + "WHERE user_id = ?").param(userId).query(Employee.class).optional();
+    }
+
+    /** HR and the IT admin see everyone, a manager their direct reports, an employee themselves. */
     public List<Employee> visibleTo(CurrentUser user) {
-        if (user.has("hr")) {
-            return db.sql(SELECT + "ORDER BY name").query(Employee.class).list();
+        if (user.has("hr") || user.has("it_admin")) {
+            return db.sql(SELECT + "ORDER BY name NULLS FIRST").query(Employee.class).list();
         }
         Optional<Employee> self = byUsername(user.username());
         if (self.isEmpty()) {

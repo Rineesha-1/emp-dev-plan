@@ -7,8 +7,8 @@ e.g. python compile-case.py src/definitions development -o target/definitions/de
 (without -o the XML is written to stdout). deploy-case.py uses it to deploy through the engine's REST API.
 
 Reads <case-name>.case and what it refers to: the .type (case file), the .caseteam (case roles), the .humantask files
-(task forms) and <case-name>.dimensions (diagram). Supported plan items: stage, humanTask, milestone, timerEvent,
-userEvent, planningTable; process and case tasks are not supported.
+(task forms), the .process files (e.g. mail) and <case-name>.dimensions (diagram). Supported plan items: stage,
+humanTask, processTask, milestone, timerEvent, userEvent, planningTable; case tasks are not supported.
 
 What compiling does:
 - Every element in the plan becomes a planItem (a discretionaryItem in a planningTable) that refers to a separate
@@ -16,6 +16,8 @@ What compiling does:
   criteria, the itemControl and (discretionary items) the authorizedRoleRefs.
 - Every entry/exit criterion becomes a criterion with a sentryRef plus a sentry, in the stage that holds the item.
 - A human task gets its .humantask implementation (inputs, outputs, task-model) merged with the case's mappings.
+- A process task keeps its inputs and mappings; the .process file it refers to becomes a <process> definition next
+  to the case (id = the file name), as the Designer's Deploy does.
 - The .type becomes caseFileItemDefinitions and the caseFileItem tree, the .caseteam becomes caseRoles."""
 import argparse
 import os
@@ -29,7 +31,8 @@ ET.register_namespace('cafienne', CAF)
 PROPERTY_TYPE = 'http://www.omg.org/spec/CMMN/PropertyType/'
 UNSPECIFIED = 'http://www.omg.org/spec/CMMN/DefinitionType/Unspecified'
 FORMAT_TYPE = {'date': 'date', 'time': 'time', 'date-time': 'dateTime'}  # JSON-schema format -> CMMN property type
-PLAN_ITEM_KINDS = ('stage', 'humanTask', 'milestone', 'timerEvent', 'userEvent')
+JSON_TYPE = {'number': 'float'}  # JSON-schema types the Designer writes in .type files -> CMMN type, as its Deploy does
+PLAN_ITEM_KINDS = ('stage', 'humanTask', 'processTask', 'milestone', 'timerEvent', 'userEvent')
 # children that belong to the planItem, not to its definition
 PLAN_ITEM_CHILDREN = ('documentation', 'entryCriterion', 'exitCriterion', 'itemControl')
 
@@ -51,6 +54,7 @@ class Compiler:
         self.folder = folder
         self.case_name = case_name
         self.definitions = []  # plan item definitions, in order, all at casePlanModel level
+        self.processes = []  # .process files referred to by process tasks, in order
 
     def read(self, file_name):
         path = os.path.join(self.folder, file_name)
@@ -97,6 +101,8 @@ class Compiler:
                 if kind == 'humanTask' and local(part) == 'extensionElements':
                     part = self.merge_human_task(part)
                 definition.append(part)
+            if kind == 'processTask' and source.get('processRef') not in self.processes:
+                self.processes.append(source.get('processRef'))
 
     def compile_stage_content(self, source, stage):
         """planItems, then the sentries, then the planningTable - the order of the CMMN schema."""
@@ -168,6 +174,7 @@ class Compiler:
                 for sub in (nested.findall(q('property')) if nested is not None else []):
                     if not is_object(sub):
                         kind = FORMAT_TYPE.get(sub.get('format'), sub.get('type', 'string'))
+                        kind = JSON_TYPE.get(kind, kind)
                         ET.SubElement(definition, q('property'), {'name': sub.get('name'), 'type': PROPERTY_TYPE + kind})
                 definitions.append(definition)
                 item = child(parent, 'caseFileItem', id='/'.join(item_path), name=name,
@@ -184,7 +191,7 @@ class Compiler:
     # ------------------------------------------------------------ whole case
     def compile(self):
         source = self.read(self.case_name + '.case')
-        unsupported = [e.tag.split('}')[-1] for e in source.iter() if e.tag.split('}')[-1] in ('processTask', 'caseTask')]
+        unsupported = [e.tag.split('}')[-1] for e in source.iter() if e.tag.split('}')[-1] == 'caseTask']
         if unsupported:
             raise SystemExit('%s uses %s, which this compiler does not support; deploy it from the Case Designer'
                              % (self.case_name, ', '.join(sorted(set(unsupported)))))
@@ -216,6 +223,11 @@ class Compiler:
             else:
                 case.append(part)
         root.append(case)
+        for ref in self.processes:
+            process = self.read(ref)
+            process.set('id', ref)
+            process.set('name', ref)
+            root.append(process)
         dimensions = os.path.join(self.folder, self.case_name + '.dimensions')
         if os.path.exists(dimensions):
             root.append(self.read(self.case_name + '.dimensions'))

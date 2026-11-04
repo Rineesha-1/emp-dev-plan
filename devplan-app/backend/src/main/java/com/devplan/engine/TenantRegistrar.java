@@ -55,20 +55,26 @@ public class TenantRegistrar implements HandlerInterceptor {
     }
 
     private void register(CurrentUser user) {
+        register(user.userId(), user.name() == null ? user.username() : user.name(), user.email(), user.caseRoles());
+    }
+
+    /** Adds a user to the engine tenant unless they are a member already; also used for a new joiner's account,
+     * which must be a tenant member before it can join a case team. */
+    public void register(String userId, String name, String email, Set<String> roles) {
         String path = "/tenant/" + props.engine().tenant() + "/users";
         try {
-            engine.call(HttpMethod.GET, path + "/" + user.userId(), null, serviceAccount.token(), null);
+            engine.call(HttpMethod.GET, path + "/" + userId, null, serviceAccount.token(), null);
+            registered.add(userId);
             return; // already a member
         } catch (EngineException notMember) {
             if (notMember.status() >= 500) {
                 throw notMember;
             }
         }
-        Map<String, Object> body = Map.of("userId", user.userId(), "roles", user.caseRoles(),
-                "name", user.name() == null ? user.username() : user.name(),
-                "email", user.email() == null ? "" : user.email());
+        Map<String, Object> body = Map.of("userId", userId, "roles", roles, "name", name,
+                "email", email == null ? "" : email);
         engine.call(HttpMethod.POST, path, body, serviceAccount.token(), null);
-        log.info("Registered {} in engine tenant {} with roles {}", user.username(), props.engine().tenant(),
-                user.caseRoles());
+        registered.add(userId);
+        log.info("Registered {} in engine tenant {} with roles {}", name, props.engine().tenant(), roles);
     }
 }

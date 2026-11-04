@@ -8,6 +8,10 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD:postgres}
     hikari:
       schema: devplan
+  mail:
+    # The CaseFabric mailcatcher (http://localhost:1080); the case model's mail process tasks send through here.
+    host: ${SPRING_MAIL_HOST:localhost}
+    port: ${SPRING_MAIL_PORT:1025}
   flyway:
     schemas: devplan
     default-schema: devplan
@@ -35,6 +39,10 @@ devplan:
     url: ${DEVPLAN_ENGINE_URL:http://localhost:2027}
     tenant: devplan
     definition: development.xml
+  mail:
+    from: devplan@local.test
+    # Shared secret the engine's mail process tasks send in the X-Mail-Token header (see MailRelayController).
+    relay-token: ${DEVPLAN_MAIL_RELAY_TOKEN:devplan-mail-relay}
   app:
     # Where Keycloak sends a new employee back after they set their password.
     base-url: ${DEVPLAN_APP_BASE_URL:http://localhost:8090}

@@ -6,102 +6,59 @@
         <input id="i_Employee__approve_plan" name="Employee" typeRef="dv_employee.type"/>
         <input id="i_Plan__approve_plan" name="Plan" typeRef="dv_plan.type"/>
         <output id="o_Approval__approve_plan" name="Approval" typeRef="dv_approval.type"/>
-        <output id="Budget__lePV" name="Budget" typeRef="dv_budget.type"/>
         <task-model>{
   "schema": {
     "title": "Approve plan",
-    "description": "Approve the plan, or reject it with comments to send it back to the employee.",
+    "description": "Read the plan and approve it, or send it back with comments.",
     "type": "object",
     "required": [
       "Approval"
     ],
     "properties": {
-          "Budget": {
-  "type": "object",
-  "title": "Training budget",
-  "properties": {
-    "amount": { "type": "number", "title": "Amount" }
-  }
-},
-
-      "Employee": {
-        "type": "object",
-        "title": "Employee",
-        "properties": {
-          "employeeId": {
-            "type": "string",
-            "title": "Employee number"
-          },
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "jobTitle": {
-            "type": "string",
-            "title": "Job title"
-          },
-          "managerId": {
-            "type": "string",
-            "title": "Manager number"
-          },
-          "managerName": {
-            "type": "string",
-            "title": "Manager"
-          },
-          "trigger": {
-            "type": "string",
-            "title": "Reason for the plan",
-            "enum": [
-              "ANNUAL_REVIEW",
-              "NEW_ROLE",
-              "CAREER_GROWTH",
-              "PERFORMANCE_IMPROVEMENT",
-              "ONBOARDING"
-            ],
-            "enumNames": [
-              "Annual review",
-              "New role",
-              "Career growth",
-              "Performance improvement",
-              "Onboarding"
-            ]
-          }
-        }
-      },
       "Plan": {
         "type": "object",
         "title": "Development plan",
+        "x-store": "dev_round",
         "properties": {
           "period": {
             "type": "string",
-            "title": "Plan period"
+            "title": "Plan period",
+            "x-case": true
           },
           "goals": {
             "type": "array",
             "title": "Goals",
+            "x-store": "dev_goal",
             "items": {
               "type": "object",
-              "title": "Goal",
               "properties": {
                 "title": {
                   "type": "string",
-                  "title": "Goal"
+                  "title": "Goal",
+                  "x-case": true
                 },
                 "type": {
                   "type": "string",
                   "title": "Type",
-                  "enum": [
-                    "SKILL",
-                    "KNOWLEDGE",
-                    "BEHAVIOUR",
-                    "CAREER"
+                  "oneOf": [
+                    {
+                      "const": "SKILL",
+                      "title": "Skill"
+                    },
+                    {
+                      "const": "KNOWLEDGE",
+                      "title": "Knowledge"
+                    },
+                    {
+                      "const": "BEHAVIOUR",
+                      "title": "Behaviour"
+                    },
+                    {
+                      "const": "CAREER",
+                      "title": "Career"
+                    }
                   ],
-                  "enumNames": [
-                    "Skill",
-                    "Knowledge",
-                    "Behaviour",
-                    "Career"
-                  ]
+                  "x-case": true
                 },
                 "description": {
                   "type": "string",
@@ -114,131 +71,90 @@
                 "targetDate": {
                   "type": "string",
                   "title": "Target date",
-                  "format": "date"
+                  "format": "date",
+                  "x-case": true
                 }
-              },
-              "required": [
-                "title",
-                "type",
-                "successCriteria",
-                "targetDate"
-              ]
-            },
-            "minItems": 1
+              }
+            }
           }
         },
-        "required": [
-          "period",
-          "goals"
-        ]
+        "readOnly": true
       },
       "Approval": {
         "type": "object",
-        "title": "Manager's decision",
+        "title": "Decision",
+        "x-store": "dev_round",
+        "x-on-complete": "decidePlan",
+        "required": [
+          "decision"
+        ],
         "properties": {
           "decision": {
             "type": "string",
             "title": "Decision",
-            "enum": [
-              "APPROVED",
-              "REJECTED"
-            ],
-            "enumNames": [
-              "Approved",
-              "Rejected"
+            "x-column": "approval_decision",
+            "x-case": true,
+            "oneOf": [
+              {
+                "const": "APPROVED",
+                "title": "Approve"
+              },
+              {
+                "const": "REJECTED",
+                "title": "Send back for changes"
+              }
             ]
           },
           "comments": {
             "type": "string",
-            "title": "Comments"
+            "title": "Comments",
+            "x-column": "approval_comments"
           }
-        },
-        "required": [
-          "decision"
-        ],
-        "if": {
-          "properties": {
-            "decision": {
-              "const": "REJECTED"
-            }
-          },
-          "required": [
-            "decision"
-          ]
-        },
-        "then": {
-          "required": [
-            "comments"
-          ]
         }
       }
     }
   },
   "uiSchema": {
-    "Employee": {
-      "ui:order": [
-        "employeeId",
-        "name",
-        "jobTitle",
-        "managerId",
-        "managerName",
-        "trigger"
-      ],
-      "ui:readonly": true
-    },
-    "Plan": {
-      "ui:order": [
-        "period",
-        "goals"
-      ],
-      "goals": {
-        "items": {
-          "ui:order": [
-            "title",
-            "type",
-            "description",
-            "successCriteria",
-            "targetDate"
-          ],
-          "description": {
-            "ui:widget": "textarea",
-            "ui:options": {
-              "rows": 3
-            }
+    "type": "VerticalLayout",
+    "elements": [
+      {
+        "type": "Group",
+        "label": "Plan",
+        "elements": [
+          {
+            "type": "Control",
+            "scope": "#/properties/Plan/properties/period"
           },
-          "successCriteria": {
-            "ui:widget": "textarea",
-            "ui:options": {
-              "rows": 3
+          {
+            "type": "Control",
+            "scope": "#/properties/Plan/properties/goals",
+            "label": "Goals",
+            "options": {
+              "table": true
             }
           }
-        },
-        "ui:options": {
-          "addable": false,
-          "removable": false,
-          "orderable": false
-        },
-        "ui:readonly": true
-      },
-      "ui:readonly": true
-    },
-    "Approval": {
-      "ui:order": [
-        "decision",
-        "comments"
-      ],
-      "comments": {
-        "ui:widget": "textarea",
-        "ui:options": {
-          "rows": 3
+        ],
+        "options": {
+          "readonly": true
         }
+      },
+      {
+        "type": "Group",
+        "label": "Decision",
+        "elements": [
+          {
+            "type": "Control",
+            "scope": "#/properties/Approval/properties/decision"
+          },
+          {
+            "type": "Control",
+            "scope": "#/properties/Approval/properties/comments",
+            "options": {
+              "multi": true
+            }
+          }
+        ]
       }
-    },
-    "ui:order": [
-      "Employee",
-      "Plan",
-      "Approval",
-          "Budget"
     ]
   },
   "submitLabel": "Save decision"

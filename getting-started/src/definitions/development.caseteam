@@ -5,4 +5,5 @@
     <role id="cr_dv_Employee" name="Employee"/>
     <role id="cr_dv_Manager" name="Manager"/>
     <role id="cr_dv_HR" name="HR"/>
+    <role id="cr_dv_ITAdmin" name="ITAdmin"/>
 </caseteam>

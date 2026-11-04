@@ -1,0 +1,12 @@
+<type xmlns="http://www.omg.org/spec/CMMN/20151109/MODEL" xmlns:cafienne="org.cafienne" id="dv_onboarding.type" name="dv_onboarding">
+    <schema>
+        <property id="sp_Onboarding_itRequestSent" name="itRequestSent" type="boolean" multiplicity="ZeroOrOne" />
+        <property id="sp_Onboarding_mandatoryItemsDone" name="mandatoryItemsDone" type="boolean" multiplicity="ZeroOrOne" />
+        <property id="sp_Onboarding_completed" name="completed" type="boolean" multiplicity="ZeroOrOne" />
+        <property id="sp_Onboarding_employeeEmail" name="employeeEmail" type="string" multiplicity="ZeroOrOne" />
+        <property id="sp_Onboarding_username" name="username" type="string" multiplicity="ZeroOrOne" />
+        <property id="sp_Onboarding_managerEmail" name="managerEmail" type="string" multiplicity="ZeroOrOne" />
+        <property id="sp_Onboarding_hrEmail" name="hrEmail" type="string" multiplicity="ZeroOrOne" />
+        <property id="sp_Onboarding_itEmail" name="itEmail" type="string" multiplicity="ZeroOrOne" />
+    </schema>
+</type>

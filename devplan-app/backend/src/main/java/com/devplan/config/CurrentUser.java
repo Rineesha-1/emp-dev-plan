@@ -34,6 +34,7 @@ public record CurrentUser(String userId, String username, String name, String em
             case "employee" -> "Employee";
             case "manager" -> "Manager";
             case "hr" -> "HR";
+            case "it_admin" -> "ITAdmin";
             default -> null;
         };
     }

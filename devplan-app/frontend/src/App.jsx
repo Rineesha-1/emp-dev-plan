@@ -1,15 +1,12 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { JsonForms } from '@jsonforms/react';
-import { MaterialArrayLayout, materialCells, materialRenderers } from '@jsonforms/material-renderers';
-import { isObjectArrayControl, rankWith } from '@jsonforms/core';
-import RjsfForm from '@rjsf/mui';
-import validator from '@rjsf/validator-ajv8';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import React, { useEffect, useState } from 'react';
 import { api } from './api.js';
-
-const OPEN_TASK = ['Unassigned', 'Assigned', 'Delegated'];
-const TASK_STATE = { Unassigned: 'To do', Assigned: 'Picked up', Delegated: 'Delegated', Completed: 'Done' };
-const ROLE_LABEL = { employee: 'Employee', manager: 'Manager', hr: 'HR' };
+import {
+  Badge, Flash, Initials, OPEN_TASK, Problem, ROLE_LABEL, StateBadge, TASK_STATE, ago, caseRolesOf, day,
+  setFlash, useLoad,
+} from './shared.jsx';
+import TaskForm from './TaskForm.jsx';
+import { EmployeeDashboard, Employees, OnboardingWizard } from './Onboarding.jsx';
+import DevelopmentPlan from './DevelopmentPlan.jsx';
 
 // The three steps of one plan round, in order (the case's stages 1 · Plan, 2 · Perform plan, 3 · Evaluate plan).
 const PHASES = [
@@ -17,19 +14,15 @@ const PHASES = [
   { key: 'perform', name: 'Perform', hint: 'Activities are carried out and progress is reviewed.' },
   { key: 'evaluate', name: 'Evaluate', hint: 'The employee and manager look back on the results.' },
 ];
-const PHASE_LABEL = { plan: 'Planning', perform: 'In progress', evaluate: 'Evaluating', waiting: 'Case is closed' };
-
-// Lists of objects (goals, activities, reviews, results) as expandable rows instead of a cramped table.
-const renderers = [...materialRenderers, { tester: rankWith(10, isObjectArrayControl), renderer: MaterialArrayLayout }];
+const PHASE_LABEL = {
+  plan: 'Planning', perform: 'In progress', evaluate: 'Evaluating', waiting: 'No plan running', onboarding: 'Onboarding',
+};
+// The case's development stage gets the plan-round strip and summary under its card.
+const DEVELOPMENT_STAGE = 'pi_development_cycle';
 
 const LABEL = {
   ANNUAL_REVIEW: 'Annual review', NEW_ROLE: 'New role', CAREER_GROWTH: 'Career growth',
   PERFORMANCE_IMPROVEMENT: 'Performance improvement', ONBOARDING: 'Onboarding',
-  SKILL: 'Skill', KNOWLEDGE: 'Knowledge', BEHAVIOUR: 'Behaviour', CAREER: 'Career',
-  PROJECT: 'Project', TRAINING: 'Training', COACHING: 'Coaching',
-  PLANNED: 'Planned', IN_PROGRESS: 'In progress', DONE: 'Done',
-  EXCEEDED: 'Exceeded', MET: 'Met', PARTIALLY_MET: 'Partially met', NOT_MET: 'Not met',
-  APPROVED: 'Approved', REJECTED: 'Rejected',
 };
 const label = (value) => LABEL[value] || value || '';
 const TRIGGERS = ['ANNUAL_REVIEW', 'NEW_ROLE', 'CAREER_GROWTH', 'PERFORMANCE_IMPROVEMENT', 'ONBOARDING'];
@@ -39,16 +32,25 @@ const EVENT_HELP = {
   'Request early review': 'Review progress now instead of waiting for the next 14-day check.',
 };
 
-// MUI theme for the RJSF and JSONForms material renderers, in the app's colours and type.
-const theme = createTheme({
-  palette: { primary: { main: '#2E6B5A' }, error: { main: '#B3402F' }, text: { primary: '#17322A', secondary: '#5A6E66' } },
-  typography: { fontFamily: "'Instrument Sans', system-ui, sans-serif" },
-  shape: { borderRadius: 8 },
-});
+// Sidebar per role, as in WF-02. Icons are monochrome strokes.
+const ICON = {
+  dash: <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />,
+  tasks: <><polyline points="9 11 12 14 21 5" /><path d="M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h11" /></>,
+  users: <><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></>,
+  folder: <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />,
+};
+function navFor(me) {
+  const roles = me?.roles || [];
+  const onboarding = me?.employee?.stage === 'ONBOARDING';
+  if (roles.includes('hr')) return [['tasks', 'My Tasks', 'tasks'], ['employees', 'Employees', 'users'], ['cases', 'Employee cases', 'folder']];
+  if (roles.includes('it_admin')) return [['tasks', 'My Tasks', 'tasks'], ['employees', 'Employees', 'users']];
+  if (roles.includes('manager')) return [['tasks', 'My Tasks', 'tasks'], ['cases', 'My Team', 'folder']];
+  return [...(onboarding ? [['dashboard', 'Dashboard', 'dash']] : []), ['tasks', 'My Tasks', 'tasks'], ['cases', 'My Cases', 'folder']];
+}
 
-/** Hash routes: #/tasks, #/tasks/:id, #/cases, #/cases/:id */
+/** Hash routes: #/dashboard, #/tasks[/:id], #/employees, #/onboarding/:employeeId, #/cases[/:id], #/plan/:caseId */
 function useRoute() {
-  const current = () => (window.location.hash.startsWith('#/') ? window.location.hash : '#/tasks');
+  const current = () => (window.location.hash.startsWith('#/') ? window.location.hash : '');
   const [hash, setHash] = useState(current);
   useEffect(() => {
     const onChange = () => setHash(current());
@@ -58,222 +60,117 @@ function useRoute() {
   return hash.slice(2).split('/');
 }
 
-function useLoad(path) {
-  const [state, setState] = useState({ data: null, error: null });
-  const reload = useCallback(() => {
-    api('GET', path)
-      .then((data) => setState({ data, error: null }))
-      .catch((error) => setState({ data: null, error: error.message }));
-  }, [path]);
-  useEffect(reload, [reload]);
-  return [state.data, state.error, reload];
-}
-
-const relative = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
-function ago(value) {
-  if (!value) return '';
-  const minutes = Math.round((new Date(value) - Date.now()) / 60000);
-  if (Math.abs(minutes) < 60) return relative.format(minutes, 'minute');
-  if (Math.abs(minutes) < 60 * 24) return relative.format(Math.round(minutes / 60), 'hour');
-  return relative.format(Math.round(minutes / (60 * 24)), 'day');
-}
-const day = (value) => (value ? new Date(value).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '');
-const caseRolesOf = (me) => (me?.roles || []).map((r) => ROLE_LABEL[r]).filter(Boolean);
-
-// A one-line confirmation shown on the next page after a task is saved.
-let flash = null;
-
 export default function App({ keycloak }) {
   const [page, id] = useRoute();
   const [me] = useLoad('/me');
-  const roles = caseRolesOf(me);
-  const isHr = me && me.roles.includes('hr');
+  const [menu, setMenu] = useState(false);
+  const [taskCount, setTaskCount] = useState(null);
+  const roles = me?.roles || [];
+  const nav = navFor(me);
+  const home = nav[0][0];
+  useEffect(() => { if (me && !page) window.location.replace(`#/${home}`); }, [me, page, home]);
+  useEffect(() => {
+    if (!me) return;
+    Promise.all([api('GET', '/tasks'), api('GET', '/onboarding/items')])
+      .then(([tasks, items]) => setTaskCount(tasks.length + items.length)).catch(() => {});
+  }, [me, page, id]);
+  const allowed = (key) => nav.some(([k]) => k === key);
+  const current = page === 'onboarding' ? 'employees' : page === 'plan' ? 'cases' : page;
+
   return (
-    <>
+    <div className="app-frame">
       <header className="topbar">
-        <a className="brand" href="#/tasks">Development plans</a>
-        <nav>
-          <a href="#/tasks" className={page === 'tasks' ? 'active' : ''}>My tasks</a>
-          <a href="#/cases" className={page === 'cases' ? 'active' : ''}>Plans</a>
-          {isHr && <a href="#/employees" className={page === 'employees' ? 'active' : ''}>Employees</a>}
-        </nav>
-        <span className="who">
-          {me && <span>{me.name}<small>{roles.join(', ')}</small></span>}
-          <button className="quiet" onClick={() => keycloak.logout({ redirectUri: window.location.origin })}>Sign out</button>
-        </span>
+        <a className="brand" href={`#/${home}`}><span className="brand-mark">CW</span>CubeWorks HR</a>
+        <div className="topbar-right">
+          {me && <span className="role-pill">{roles.map((r) => ROLE_LABEL[r]).filter(Boolean).join(', ')}</span>}
+          {me && <span className="user-name">{me.name}</span>}
+          <button className="profile-avatar" onClick={() => setMenu(!menu)} aria-label="Account menu"><Initials name={me?.name} /></button>
+          {menu && (
+            <div className="dropdown usermenu">
+              <div className="um-hd"><b>{me?.name}</b><small>{me?.username}</small></div>
+              <button className="um-item" onClick={() => keycloak.logout({ redirectUri: window.location.origin })}>Log out</button>
+            </div>
+          )}
+        </div>
       </header>
-      <main>
-        {page === 'tasks' && !id && <TaskList />}
-        {page === 'tasks' && id && <TaskForm taskId={id} me={me} />}
-        {page === 'cases' && !id && <CaseList me={me} />}
-        {page === 'cases' && id && <CaseDetail caseId={id} roles={roles} />}
-        {page === 'employees' && isHr && <EmployeeAdmin />}
-      </main>
-    </>
+      <div className="app">
+        <nav className="sidebar" aria-label="Main">
+          {nav.map(([key, text, icon]) => (
+            <a key={key} href={`#/${key}`} className={`nav-item${current === key ? ' active' : ''}`}>
+              <span className="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{ICON[icon]}</svg></span>
+              {text}
+              {key === 'tasks' && taskCount !== null && <span className="nav-count">{taskCount}</span>}
+            </a>
+          ))}
+        </nav>
+        <main className="content" onClick={() => menu && setMenu(false)}>
+          {!me && <p className="muted">Loading…</p>}
+          {me && page === 'dashboard' && <EmployeeDashboard me={me} />}
+          {me && page === 'tasks' && !id && <TaskList />}
+          {me && page === 'tasks' && id && <TaskForm taskId={id} me={me} />}
+          {me && page === 'employees' && allowed('employees') && <Employees me={me} />}
+          {me && page === 'onboarding' && id && allowed('employees') && <OnboardingWizard employeeId={id} me={me} />}
+          {me && page === 'cases' && !id && <CaseList me={me} />}
+          {me && page === 'cases' && id && <CaseDetail caseId={id} me={me} />}
+          {me && page === 'plan' && id && <DevelopmentPlan caseId={id} me={me} />}
+        </main>
+      </div>
+    </div>
   );
 }
 
-function Problem({ message }) {
-  return message ? <p className="problem" role="alert">{message}</p> : null;
-}
-
-function Flash() {
-  const [message] = useState(() => { const m = flash; flash = null; return m; });
-  return message ? <p className="flash" role="status">{message}</p> : null;
-}
-
+/** My Tasks: the engine's human tasks for the user's case roles plus their open onboarding checklist items (ONB-03). */
 function TaskList() {
   const [tasks, error, reload] = useLoad('/tasks');
+  const [items, itemsError, reloadItems] = useLoad('/onboarding/items');
+  const [tickError, setTickError] = useState(null);
+  const refresh = () => { reload(); reloadItems(); };
+  const tick = (item) => {
+    setTickError(null);
+    api('POST', `/onboarding/checklist/${item.id}/done`).then(() => { setFlash(`${item.name}: done.`); refresh(); })
+      .catch((e) => setTickError(e.message));
+  };
+  const loading = (!tasks && !error) || (!items && !itemsError);
+  const empty = tasks && items && tasks.length + items.length === 0;
   return (
     <section>
       <Flash />
-      <div className="page-head">
-        <h1>My tasks</h1>
-        <button className="quiet" onClick={reload}>Refresh</button>
+      <div className="page-header">
+        <div><div className="page-title">My Tasks</div><div className="page-subtitle">Open tasks</div></div>
+        <div className="header-actions"><button className="btn btn-secondary btn-sm" onClick={refresh}>Refresh</button></div>
       </div>
-      <Problem message={error} />
-      {!tasks && !error && <p className="muted">Loading your tasks…</p>}
-      {tasks && tasks.length === 0 && (
-        <div className="empty">
-          <p><strong>Nothing to do right now.</strong></p>
-          <p className="muted">Tasks show up here when a development plan needs you. Open <a href="#/cases">Plans</a> to see where each plan is.</p>
-        </div>
-      )}
-      {tasks && tasks.length > 0 && (
-        <ul className="rows">
-          {tasks.map((t) => (
-            <li key={t.id}>
-              <a className="row-link" href={`#/tasks/${t.id}`}>
-                <span className="row-main">
-                  <strong>{t.taskName}</strong>
-                  <span className="muted">{t.employeeName ? `${t.employeeName}'s plan` : 'Development plan'} · as {t.role}</span>
-                </span>
-                <span className="row-side">
-                  <span className="pill todo">{TASK_STATE[t.taskState] || t.taskState}</span>
-                  <small className="muted">{ago(t.createdOn)}</small>
-                </span>
-              </a>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
-  );
-}
-
-/** True when the object, or anything nested in it, has one of the given keys. */
-function hasProperties(object, ...names) {
-  if (!object || typeof object !== 'object') return false;
-  return Object.keys(object).some((key) => names.includes(key) || hasProperties(object[key], ...names));
-}
-
-/**
- * Which renderer a task-model asks for, decided as the CaseFabric Case UI does: no "schema" means no form; RJSF is the
- * default, JSONForms is used when the uiSchema has JSONForms layout keys and no RJSF keys.
- */
-function formKind(model) {
-  if (!model || typeof model !== 'object' || !model.schema) return 'none';
-  const ui = model.uiSchema;
-  const rjsf = hasProperties(ui, 'ui:widget', 'ui:order', 'ui:readonly');
-  return rjsf || !hasProperties(ui, 'type', 'elements', 'rule') ? 'rjsf' : 'jsonforms';
-}
-
-/** The schema with "$CURRENT_USER" values replaced by the signed-in user's id, as in the Case UI. */
-function withCurrentUser(value, userId) {
-  if (value === '$CURRENT_USER') return userId;
-  if (Array.isArray(value)) return value.map((v) => withCurrentUser(v, userId));
-  if (value && typeof value === 'object') {
-    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, withCurrentUser(v, userId)]));
-  }
-  return value;
-}
-
-/**
- * Renders the task's form straight from its task-model ("schema" + "uiSchema", RJSF or JSONForms) and completes the
- * task with the whole form. A parameter added to the human task model shows up here without changes to the app.
- */
-function TaskForm({ taskId, me }) {
-  const [form, loadError] = useLoad(`/tasks/${taskId}`);
-  const [data, setData] = useState(null);
-  const [errors, setErrors] = useState([]);
-  const [submitted, setSubmitted] = useState(false);
-  const [error, setError] = useState(null);
-  const [busy, setBusy] = useState(false);
-  useEffect(() => setData(form?.formData ?? null), [form]);
-  if (loadError) return <Problem message={loadError} />;
-  if (!form || !data) return <p className="muted">Loading the form…</p>;
-  const task = form.task;
-  const open = OPEN_TASK.includes(task.taskState);
-  const model = form.taskModel;
-  const kind = formKind(model);
-  // The page shows the form's title and description itself, so the renderer gets the schema without them.
-  const { title, description, ...schema } = withCurrentUser(model?.schema ?? {}, me?.userId);
-  const submitLabel = model?.submitLabel || 'Submit';
-
-  const complete = (formData) => {
-    setBusy(true);
-    setError(null);
-    api('POST', `/tasks/${taskId}/complete`, formData)
-      .then(() => {
-        flash = `${task.taskName}: saved.`;
-        window.location.hash = `#/cases/${task.caseInstanceId}`;
-      })
-      .catch((e) => { setError(e.message); setBusy(false); });
-  };
-
-  // Validation messages stay hidden until the first submit attempt.
-  const submitJsonForms = (event) => {
-    event.preventDefault();
-    setSubmitted(true);
-    if (errors.length > 0) return;
-    complete(data);
-  };
-
-  const actions = open && (
-    <div className="form-actions">
-      <button type="submit" className="primary" disabled={busy}>{busy ? 'Saving…' : submitLabel}</button>
-      <a href={`#/cases/${task.caseInstanceId}`}>Cancel</a>
-    </div>
-  );
-  const messages = (
-    <>
-      {submitted && errors.length > 0 && <Problem message="Some fields still need an answer. They are marked in red." />}
-      <Problem message={error} />
-    </>
-  );
-
-  return (
-    <section className="task">
-      <a className="back" href={`#/cases/${task.caseInstanceId}`}>← {form.employeeName ? `${form.employeeName}'s plan` : 'Back to the plan'}</a>
-      <h1>{title || task.taskName}</h1>
-      {description && <p className="lead">{description}</p>}
-      {!open && <p className="flash">This task is done. You are looking at what was filled in.</p>}
-      <ThemeProvider theme={theme}>
-        {kind === 'rjsf' && (
-          <RjsfForm schema={schema} uiSchema={model.uiSchema || {}} formData={data} validator={validator}
-                    readonly={!open || busy} noHtml5Validate showErrorList={false} liveValidate={submitted}
-                    onChange={(e) => { setData(e.formData); setErrors(e.errors ?? []); }}
-                    onError={(found) => { setSubmitted(true); setErrors(found); }}
-                    onSubmit={(e) => { setErrors([]); complete(e.formData); }}>
-            {/* Children replace RJSF's own submit button. */}
-            {messages}
-            {actions}
-          </RjsfForm>
-        )}
-        {kind !== 'rjsf' && (
-          <form onSubmit={submitJsonForms} noValidate>
-            {kind === 'jsonforms' && (
-              <JsonForms schema={schema} uischema={model.uischema || model.uiSchema} data={data} renderers={renderers}
-                         cells={materialCells} readonly={!open || busy}
-                         validationMode={submitted ? 'ValidateAndShow' : 'ValidateAndHide'}
-                         onChange={({ data: changed, errors: found }) => { setData(changed); setErrors(found ?? []); }} />
-            )}
-            {kind === 'none' && <p className="muted">This task has no form. Press {submitLabel} to complete it.</p>}
-            {messages}
-            {actions}
-          </form>
-        )}
-      </ThemeProvider>
+      <Problem message={error || itemsError || tickError} />
+      <div className="table-wrap">
+        <table>
+          <thead><tr><th>Type</th><th>Task</th><th>Employee</th><th>Since</th><th className="col-center">Action</th></tr></thead>
+          <tbody>
+            {loading && <tr className="no-results"><td colSpan={5}>Loading your tasks…</td></tr>}
+            {empty && <tr className="no-results"><td colSpan={5}>All caught up — no open tasks</td></tr>}
+            {(tasks || []).map((t) => (
+              <tr key={t.id} className="row-link" onClick={() => { window.location.hash = `#/tasks/${t.id}`; }}>
+                <td><Badge kind="info">Task</Badge></td>
+                <td><b>{t.taskName}</b><div className="cell-sub">as {t.role} · {TASK_STATE[t.taskState] || t.taskState}</div></td>
+                <td>{t.employeeName || '—'}</td>
+                <td>{ago(t.createdOn)}</td>
+                <td className="col-center"><a className="btn btn-secondary btn-xs" href={`#/tasks/${t.id}`}>Open</a></td>
+              </tr>
+            ))}
+            {(items || []).map((i) => (
+              <tr key={`item-${i.id}`}>
+                <td><Badge kind="new">Checklist</Badge></td>
+                <td><b>{i.name}</b>{i.mandatory && <span className="req-star">*</span>}<div className="cell-sub">Onboarding</div></td>
+                <td>{i.employeeName}</td>
+                <td>—</td>
+                <td className="col-center">
+                  {i.itemKind === 'EQUIPMENT_CONFIRM'
+                    ? <span className="cell-sub">via its task</span>
+                    : <button className="btn btn-primary btn-xs" onClick={() => tick(i)}>Mark done</button>}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </section>
   );
 }
@@ -294,9 +191,9 @@ function CaseList({ me }) {
   const [trigger, setTrigger] = useState('');
   const [startError, setStartError] = useState(null);
   const canStart = me && (me.roles.includes('hr') || me.roles.includes('manager'));
-  const candidates = (employees || []).filter((e) => e.managerId);
-  // One active case per employee: while its plan runs no new one can be set up; a closed case gets a new round.
-  const running = new Set((cases || []).filter((c) => ['plan', 'perform', 'evaluate'].includes(c.phase))
+  const candidates = (employees || []).filter((e) => e.managerId && e.stage === 'ACTIVE');
+  // One active case per employee: while onboarding or a plan runs no new one can be set up.
+  const running = new Set((cases || []).filter((c) => ['plan', 'perform', 'evaluate', 'onboarding'].includes(c.phase))
     .map((c) => c.employee?.employeeId));
 
   const start = () => {
@@ -308,132 +205,50 @@ function CaseList({ me }) {
 
   return (
     <section>
-      <div className="page-head">
-        <h1>Plans</h1>
-        <button className="quiet" onClick={reload}>Refresh</button>
+      <div className="page-header">
+        <div><div className="page-title">{me.roles.includes('hr') ? 'Employee cases' : me.roles.includes('manager') ? 'My Team' : 'My Cases'}</div>
+          <div className="page-subtitle">Onboarding, development plan, appraisal and work cycle per employee</div></div>
+        <div className="header-actions"><button className="btn btn-secondary btn-sm" onClick={reload}>Refresh</button></div>
       </div>
       {canStart && (
-        <div className="start">
+        <div className="card start">
           <label htmlFor="employee">Set up development planning for</label>
-          <select id="employee" value={employeeId} onChange={(e) => setEmployeeId(e.target.value)}>
+          <select id="employee" className="field-select filt" value={employeeId} onChange={(e) => setEmployeeId(e.target.value)}>
             <option value="">Choose an employee</option>
             {candidates.map((e) => (
               <option key={e.employeeId} value={e.employeeId} disabled={running.has(e.employeeId)}>
-                {e.name}{running.has(e.employeeId) ? ' (plan running)' : ''}
+                {e.name}{running.has(e.employeeId) ? ' (running)' : ''}
               </option>
             ))}
           </select>
           <label htmlFor="trigger">because of</label>
-          <select id="trigger" value={trigger} onChange={(e) => setTrigger(e.target.value)}>
+          <select id="trigger" className="field-select filt" value={trigger} onChange={(e) => setTrigger(e.target.value)}>
             <option value="">Choose a reason</option>
             {TRIGGERS.map((t) => <option key={t} value={t}>{label(t)}</option>)}
           </select>
-          <button className="primary" disabled={!employeeId || !trigger} onClick={start}>Set up</button>
+          <button className="btn btn-primary" disabled={!employeeId || !trigger} onClick={start}>Set up</button>
           <Problem message={startError} />
         </div>
       )}
       <Problem message={error} />
-      {!cases && !error && <p className="muted">Loading plans…</p>}
-      {cases && cases.length === 0 && (
-        <div className="empty">
-          <p><strong>No development plans yet.</strong></p>
-          <p className="muted">{canStart ? 'Choose an employee above to set one up.' : 'Your manager or HR sets up your development planning.'}</p>
-        </div>
-      )}
-      {cases && cases.length > 0 && (
-        <ul className="rows">
-          {cases.map((c) => (
-            <li key={c.caseId}>
-              <a className="row-link" href={`#/cases/${c.caseId}`}>
-                <span className="row-main">
-                  <strong>{c.employee?.name}</strong>
-                  <span className="muted">Since {day(c.startedAt)}{c.round > 0 ? ` · round ${c.round}` : ''}</span>
-                </span>
-                <span className="row-side">
-                  <PhaseDots phase={c.phase} />
-                  <span className="phase-name">{c.phase === 'waiting' && c.round === 0 ? 'Not started yet' : PHASE_LABEL[c.phase] || c.state}</span>
-                </span>
-              </a>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
-  );
-}
-
-const EMPTY_EMPLOYEE = { name: '', jobTitle: '', username: '', email: '', role: '', managerId: '' };
-
-/** HR-only: creates a Keycloak account and the employee record. Keycloak emails the person a link to set their
- * own password — nobody here ever sees or handles one. */
-function EmployeeAdmin() {
-  const [employees, error, reload] = useLoad('/employees');
-  const [form, setForm] = useState(EMPTY_EMPLOYEE);
-  const [busy, setBusy] = useState(false);
-  const [submitError, setSubmitError] = useState(null);
-  const [sentTo, setSentTo] = useState(null);
-  const field = (name) => ({
-    value: form[name],
-    onChange: (e) => { setSentTo(null); setForm({ ...form, [name]: e.target.value }); },
-  });
-  const canSubmit = form.name && form.username && form.email && form.role;
-
-  const submit = (event) => {
-    event.preventDefault();
-    setBusy(true);
-    setSubmitError(null);
-    api('POST', '/employees', { ...form, managerId: form.managerId || null })
-      .then((result) => { setSentTo(result.email); setForm(EMPTY_EMPLOYEE); reload(); })
-      .catch((e) => setSubmitError(e.message))
-      .finally(() => setBusy(false));
-  };
-
-  return (
-    <section>
-      <div className="page-head">
-        <h1>Employees</h1>
-        <button className="quiet" onClick={reload}>Refresh</button>
+      <div className="table-wrap">
+        <table>
+          <thead><tr><th>Employee</th><th>Since</th><th>Development plan</th><th>Status</th></tr></thead>
+          <tbody>
+            {!cases && !error && <tr className="no-results"><td colSpan={4}>Loading…</td></tr>}
+            {cases && cases.length === 0 && <tr className="no-results"><td colSpan={4}>{canStart ? 'No cases yet. Choose an employee above to set one up.' : 'No cases yet.'}</td></tr>}
+            {(cases || []).map((c) => (
+              <tr key={c.caseId} className="row-link" onClick={() => { window.location.hash = `#/cases/${c.caseId}`; }}>
+                <td><span className="cell-person"><Initials name={c.employee?.name || 'New'} /><span className="cell-name">{c.employee?.name || 'New employee'}</span></span></td>
+                <td>{day(c.startedAt)}{c.round > 0 ? ` · round ${c.round}` : ''}</td>
+                <td><PhaseDots phase={c.phase} /></td>
+                <td>{c.phase === 'onboarding' ? <Badge kind="info">Onboarding</Badge>
+                  : <span>{c.phase === 'waiting' && c.round === 0 ? 'Not started yet' : PHASE_LABEL[c.phase] || c.state}</span>}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
-      <form className="start pairs" onSubmit={submit}>
-        <label htmlFor="emp-name">Name</label>
-        <input id="emp-name" {...field('name')} required />
-        <label htmlFor="emp-title">Job title</label>
-        <input id="emp-title" {...field('jobTitle')} />
-        <label htmlFor="emp-username">Username</label>
-        <input id="emp-username" {...field('username')} required />
-        <label htmlFor="emp-email">Email</label>
-        <input id="emp-email" type="email" {...field('email')} required />
-        <label htmlFor="emp-role">Role</label>
-        <select id="emp-role" {...field('role')}>
-          <option value="">Choose a role</option>
-          <option value="employee">Employee</option>
-          <option value="manager">Manager</option>
-          <option value="hr">HR</option>
-        </select>
-        <label htmlFor="emp-manager">Manager</label>
-        <select id="emp-manager" {...field('managerId')}>
-          <option value="">No manager</option>
-          {(employees || []).filter((e) => e.role === 'manager')
-            .map((e) => <option key={e.employeeId} value={e.employeeId}>{e.name}</option>)}
-        </select>
-        <button className="primary" type="submit" disabled={!canSubmit || busy}>{busy ? 'Adding…' : 'Add employee'}</button>
-        <Problem message={submitError} />
-      </form>
-      {sentTo && <p className="flash" role="status">Invite email sent to {sentTo}. They'll set their own password from the link in it.</p>}
-      <Problem message={error} />
-      {!employees && !error && <p className="muted">Loading employees…</p>}
-      {employees && employees.length > 0 && (
-        <ul className="rows">
-          {employees.map((e) => (
-            <li key={e.employeeId} className="row-link">
-              <span className="row-main">
-                <strong>{e.name}</strong>
-                <span className="muted">{e.username}{e.jobTitle ? ` · ${e.jobTitle}` : ''}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
     </section>
   );
 }
@@ -442,12 +257,11 @@ function EmployeeAdmin() {
 function PhaseStrip({ phase, round }) {
   const index = PHASES.findIndex((p) => p.key === phase);
   if (index < 0) {
-    const notStarted = phase === 'waiting' && round === 0;
+    const notStarted = round === 0;
     return (
       <div className="strip idle">
-        <p className="strip-title">{notStarted ? 'Not started yet' : 'Case is closed'}</p>
-        <p className="muted">{notStarted ? 'Start the development plan to begin.'
-          : phase === 'waiting' ? 'The manager or HR can start a new development plan.' : 'This case is closed.'}</p>
+        <p className="strip-title">{notStarted ? 'Not started yet' : 'No plan running'}</p>
+        <p className="muted">{notStarted ? 'Start the development plan to begin.' : 'The manager or HR can start a new development plan.'}</p>
       </div>
     );
   }
@@ -464,171 +278,105 @@ function PhaseStrip({ phase, round }) {
   );
 }
 
-function CaseDetail({ caseId, roles }) {
+/**
+ * One employee's case. Its top-level stages come from the case model (onboarding, development plan, appraisal, work
+ * cycle, and any stage added later), each with its state and the events the user may raise to start or drive it.
+ */
+function CaseDetail({ caseId, me }) {
   const [data, error, reload] = useLoad(`/cases/${caseId}`);
   const [actionError, setActionError] = useState(null);
   const [busy, setBusy] = useState(false);
+  const roles = caseRolesOf(me);
   if (error) return <Problem message={error} />;
-  if (!data) return <p className="muted">Loading the plan…</p>;
+  if (!data) return <p className="muted">Loading the case…</p>;
 
   const act = (promise) => {
     setActionError(null);
     setBusy(true);
     promise.then(reload).catch((e) => setActionError(e.message)).finally(() => setBusy(false));
   };
-  // A stage that completes leaves its unused events Available; only show those in running stages, and only the
-  // events this user's case roles may raise (the backend reads the event roles from the case definition).
-  const activeStages = new Set(data.planItems.filter((p) => p.currentState === 'Active').map((p) => p.id));
-  const events = data.planItems.filter((p) => p.type === 'UserEvent' && p.currentState === 'Available'
-    && (!p.stageId || activeStages.has(p.stageId)) && data.raisableEvents.includes(p.definitionId));
-  // Activities can only be added while 2 · Perform plan runs (the planning table's stage).
-  const activities = data.discretionaryItems.filter((d) => activeStages.has(d.parentId));
   const file = data.caseFile || {};
   const openTasks = data.tasks.filter((t) => OPEN_TASK.includes(t.taskState));
   const mine = openTasks.filter((t) => roles.includes(t.role));
   const others = openTasks.filter((t) => !roles.includes(t.role));
+  const employeeId = file.Employee?.employeeId;
+  const canSeeOnboarding = me.roles.includes('hr') || me.roles.includes('it_admin');
 
   return (
     <section>
       <Flash />
-      <a className="back" href="#/cases">← All plans</a>
-      <div className="page-head">
-        <h1>{file.Employee?.name}</h1>
-        <span className="muted">{data.round > 0 ? `Round ${data.round}` : 'Not started yet'}</span>
+      <a className="back-link" href="#/cases">← All cases</a>
+      <div className="emp-head">
+        <Initials name={file.Employee?.name || 'New'} large />
+        <div className="emp-head-main">
+          <div className="emp-name">{file.Employee?.name || 'New employee'}</div>
+          <div className="emp-meta">
+            {[file.Employee?.jobTitle, file.Employee?.managerName && `Manager: ${file.Employee.managerName}`,
+              file.Employee?.trigger && `Reason: ${label(file.Employee.trigger)}`].filter(Boolean).join(' · ')}
+          </div>
+        </div>
+        {data.phase === 'onboarding' ? <Badge kind="info">Onboarding</Badge> : <Badge kind="success">Active</Badge>}
       </div>
-      <p className="facts">
-        {[file.Employee?.jobTitle, file.Employee?.managerName && `Manager: ${file.Employee.managerName}`,
-          file.Employee?.trigger && `Reason: ${label(file.Employee.trigger)}`].filter(Boolean).join(' · ')}
-      </p>
-
-      <PhaseStrip phase={data.phase} round={data.round} />
       <Problem message={actionError} />
 
-      <div className="columns">
-        <div>
-          <h2>For you</h2>
-          {mine.length === 0 && <p className="muted">Nothing waits on you in this plan.</p>}
-          <ul className="rows">
-            {mine.map((t) => (
-              <li key={t.id}>
-                <a className="row-link attention" href={`#/tasks/${t.id}`}>
-                  <span className="row-main"><strong>{t.taskName}</strong><span className="muted">as {t.role} · {ago(t.createdOn)}</span></span>
-                  <span className="row-side"><span className="pill todo">Open</span></span>
-                </a>
-              </li>
-            ))}
-          </ul>
-          {others.length > 0 && (
-            <>
-              <h3>Waiting on others</h3>
-              <ul className="plain">
-                {others.map((t) => <li key={t.id}>{t.taskName} <span className="muted">· {t.role}</span></li>)}
-              </ul>
-            </>
-          )}
-        </div>
-
-        <div>
-          <h2>You can</h2>
-          {events.length === 0 && activities.length === 0 && <p className="muted">There is nothing to start right now.</p>}
-          {events.map((e) => (
-            <div key={e.id} className="action">
-              <button className="primary" disabled={busy} onClick={() => act(api('POST', `/cases/${caseId}/events/${e.id}`))}>{e.name}</button>
-              {EVENT_HELP[e.name] && <p className="muted">{EVENT_HELP[e.name]}</p>}
+      <div className="stage-cards">
+        {data.stages.map((s) => (
+          <div key={s.planItemId} className={`card stage-card${s.state === 'Active' ? ' active' : ''}`}>
+            <div className="card-title card-title-row">
+              <span>{s.name}</span>
+              <StateBadge state={s.state} />
             </div>
-          ))}
-          {activities.length > 0 && (
-            <div className="action">
-              <p className="action-title">Add an activity to the plan</p>
-              <div className="chips">
-                {activities.map((d) => (
-                  <button key={d.definitionId} className="chip" disabled={busy} onClick={() => act(api('POST', `/cases/${caseId}/plan`, d))}>+ {d.name}</button>
+            {s.planItemId === DEVELOPMENT_STAGE && <PhaseStrip phase={data.phase} round={data.round} />}
+            {s.planItemId === DEVELOPMENT_STAGE && (s.state !== 'Available' || data.round > 0) && (
+              <a className="btn btn-secondary btn-sm" href={`#/plan/${caseId}`}>Open development plan</a>
+            )}
+            {s.planItemId !== DEVELOPMENT_STAGE && s.state === 'Active' && s.events.length === 0
+              && !(s.planItemId === 'pi_onboarding') && <p className="muted">Started. No tasks yet.</p>}
+            {s.planItemId === 'pi_onboarding' && s.state === 'Active' && canSeeOnboarding && employeeId && (
+              <a className="btn btn-secondary btn-sm" href={`#/onboarding/${employeeId}`}>Open onboarding</a>
+            )}
+            {s.state === 'Available' && s.events.length === 0 && (
+              <p className="muted">{data.phase === 'onboarding' ? 'Can be started after onboarding.' : 'Not started.'}</p>
+            )}
+            {s.events.length > 0 && (
+              <div className="stage-actions">
+                {s.events.map((e) => (
+                  <div key={e.id} className="action">
+                    <button className="btn btn-primary btn-sm" disabled={busy}
+                            onClick={() => act(api('POST', `/cases/${caseId}/events/${e.id}`))}>{e.name}</button>
+                    {EVENT_HELP[e.name] && <span className="muted"> {EVENT_HELP[e.name]}</span>}
+                  </div>
                 ))}
               </div>
-              <p className="muted">The new activity appears as a task to fill in.</p>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        ))}
       </div>
 
-      <PlanSummary file={file} phase={data.phase} />
+      <div className="card">
+        <div className="card-title">For you</div>
+        {mine.length === 0 && <p className="muted">Nothing waits on you in this case.</p>}
+        {mine.length > 0 && (
+          <div className="task-list">
+            {mine.map((t) => (
+              <a key={t.id} className="task-row" href={`#/tasks/${t.id}`}>
+                <span><Badge kind="info">Open</Badge></span>
+                <span><div className="task-title">{t.taskName}</div><div className="task-sub">as {t.role}</div></span>
+                <span className="task-due">{ago(t.createdOn)}</span>
+                <span>→</span>
+              </a>
+            ))}
+          </div>
+        )}
+        {others.length > 0 && (
+          <>
+            <div className="section-h">Waiting on others</div>
+            <ul className="plain">
+              {others.map((t) => <li key={t.id}>{t.taskName} <span className="muted">· {t.role}</span></li>)}
+            </ul>
+          </>
+        )}
+      </div>
     </section>
-  );
-}
-
-const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-
-/**
- * The development plan as the case file holds it, in plain words. Activities and ProgressReviews keep growing over
- * the rounds; the copy of each finished round in PreviousRounds tells which elements belong to the current one.
- */
-function PlanSummary({ file, phase }) {
-  const rounds = file.PreviousRounds || [];
-  const last = rounds[rounds.length - 1];
-  const activities = (file.Activities || []).slice(last?.activities?.length || 0);
-  const reviews = (file.ProgressReviews || []).slice(last?.progressReviews?.length || 0);
-  // Until the new round's plan is sent, Plan and Approval still hold the last round's (shown under Earlier rounds).
-  const plan = last && phase === 'plan' && same(file.Plan, last.plan) ? null : file.Plan;
-  const approval = last && same(file.Approval, last.approval) ? null : file.Approval;
-  if (!plan && rounds.length === 0) return null;
-  return (
-    <div className="summary">
-      {plan && (
-        <>
-          <h2>The plan{plan.period ? ` for ${plan.period}` : ''}</h2>
-          {approval?.decision && (
-            <p className="muted">Manager's decision: {label(approval.decision)}{approval.comments ? ` — ${approval.comments}` : ''}</p>
-          )}
-          <ol className="goals">
-            {(plan.goals || []).map((g, i) => (
-              <li key={i}>
-                <strong>{g.title}</strong> <span className="pill">{label(g.type)}</span>
-                <span className="muted"> · by {day(g.targetDate)}</span>
-                {g.successCriteria && <p>{g.successCriteria}</p>}
-              </li>
-            ))}
-          </ol>
-        </>
-      )}
-      {activities.length > 0 && (
-        <>
-          <h3>Activities</h3>
-          <ul className="plain">
-            {activities.map((a, i) => (
-              <li key={i}>{a.description} <span className="muted">· {label(a.type)} · {label(a.status)}{a.relatedGoal ? ` · for “${a.relatedGoal}”` : ''}</span></li>
-            ))}
-          </ul>
-        </>
-      )}
-      {reviews.length > 0 && (
-        <>
-          <h3>Progress reviews</h3>
-          <ul className="plain">
-            {reviews.map((r, i) => (
-              <li key={i}>{day(r.date)}: {r.onTrack ? 'on track' : 'not on track'}{r.notes ? ` — ${r.notes}` : ''}</li>
-            ))}
-          </ul>
-        </>
-      )}
-      {rounds.length > 0 && (
-        <>
-          <h3>Earlier rounds</h3>
-          {rounds.map((r, i) => (
-            <details key={i} className="round">
-              <summary>{r.period || `Round ${i + 1}`}: {label(r.evaluation?.outcome) || 'evaluated'}</summary>
-              {r.evaluation?.summary && <p>{r.evaluation.summary}</p>}
-              <p className="muted">{(r.activities?.length || 0) - (rounds[i - 1]?.activities?.length || 0)} activities ·{' '}
-                {(r.progressReviews?.length || 0) - (rounds[i - 1]?.progressReviews?.length || 0)} progress reviews</p>
-              <ul className="plain">
-                {(r.plan?.goals || []).map((g, j) => {
-                  const result = (r.evaluation?.goalResults || []).find((x) => x.goalTitle === g.title);
-                  return <li key={j}>{g.title} <span className="muted">· {result ? label(result.result) : 'no result recorded'}</span></li>;
-                })}
-              </ul>
-            </details>
-          ))}
-        </>
-      )}
-    </div>
   );
 }

@@ -1,14 +1,12 @@
 <type xmlns="http://www.omg.org/spec/CMMN/20151109/MODEL" xmlns:cafienne="org.cafienne" id="development.type" name="development">
     <schema>
         <property id="sp_Employee" name="Employee" type="dv_employee.type" multiplicity="ExactlyOne"/>
+        <property id="sp_Onboarding" name="Onboarding" type="dv_onboarding.type" multiplicity="ZeroOrOne"/>
         <property id="sp_Plan" name="Plan" type="dv_plan.type" multiplicity="ZeroOrOne"/>
         <property id="sp_Approval" name="Approval" type="dv_approval.type" multiplicity="ZeroOrOne"/>
         <property id="sp_Activities" name="Activities" type="dv_activity.type" multiplicity="ZeroOrMore"/>
         <property id="sp_ProgressReviews" name="ProgressReviews" type="dv_progressreview.type" multiplicity="ZeroOrMore"/>
         <property id="sp_SelfAssessment" name="SelfAssessment" type="dv_selfassessment.type" multiplicity="ZeroOrOne"/>
         <property id="sp_Evaluation" name="Evaluation" type="dv_evaluation.type" multiplicity="ZeroOrOne"/>
-        <property id="sp_PreviousRounds" name="PreviousRounds" type="dv_previousround.type" multiplicity="ZeroOrMore"/>
-        <property id="sp__eB3Au_0" name="Mentor" type="dv_test.type" multiplicity="ExactlyOne"/>
-        <property id="sp__E7w44_0" name="Budget" type="dv_budget.type" multiplicity="ExactlyOne"/>
     </schema>
 </type>

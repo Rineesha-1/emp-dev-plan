@@ -31,6 +31,8 @@ services:
       DEVPLAN_ENGINE_URL: ${DEVPLAN_ENGINE_URL:-http://case-engine:2027}
       # Where Keycloak sends a new employee back after they set their password.
       DEVPLAN_APP_BASE_URL: ${DEVPLAN_APP_BASE_URL:-http://localhost:8090}
+      SPRING_MAIL_HOST: ${SPRING_MAIL_HOST:-mailcatcher}
+      DEVPLAN_MAIL_RELAY_TOKEN: ${DEVPLAN_MAIL_RELAY_TOKEN:-devplan-mail-relay}
     # Not published on the host: the browser reaches it through the frontend. Uncomment to call the API directly.
     # ports:
     #   - "8091:8080"

@@ -1,0 +1,102 @@
+<humanTask xmlns="http://www.omg.org/spec/CMMN/20151109/MODEL" xmlns:cafienne="org.cafienne">
+    <cafienne:implementation name="EquipmentRequest" class="org.cafienne.cmmn.definition.task.WorkflowTaskDefinition">
+        <documentation textFormat="text/plain">
+            <text><![CDATA[Equipment request. Owner: IT admin. Shows HR's request (read-only, from the devplan database) and records the issued equipment in the asset register (x-store "assets"). Accounts are ticked on the IT checklist shown with the task.]]></text>
+        </documentation>
+        <input id="i_Employee__equipment_request" name="Employee" typeRef="dv_employee.type"/>
+        <task-model>{
+  "schema": {
+    "title": "Equipment request",
+    "description": "Record each item you issue: it is added to the employee's assets and ticks the matching checklist item. Tick the accounts on the checklist below, then Mark setup done.",
+    "type": "object",
+    "properties": {
+      "Request": {
+        "type": "object",
+        "title": "Requested by HR",
+        "x-store": "onboarding",
+        "readOnly": true,
+        "properties": {
+          "itLaptopModel": { "type": "string", "title": "Laptop" },
+          "itKeyboardLayout": { "type": "string", "title": "Keyboard layout" },
+          "itReadyBy": { "type": "string", "title": "Ready by", "format": "date" },
+          "itDeliveryMethod": {
+            "type": "string", "title": "Delivery",
+            "oneOf": [
+              { "const": "OFFICE_DAY1", "title": "Pick up at office on day 1" },
+              { "const": "SHIP_HOME", "title": "Ship to home address" }
+            ]
+          },
+          "itAccessories": {
+            "type": "array", "title": "Accessories", "uniqueItems": true,
+            "items": { "type": "string", "enum": ["Monitor", "Keyboard &amp; mouse", "Headset", "Docking station", "Phone", "Access badge"] }
+          },
+          "itAccounts": {
+            "type": "array", "title": "Accounts &amp; software", "uniqueItems": true,
+            "items": { "type": "string", "enum": ["Microsoft 365 / e-mail", "Slack", "VPN", "Jira / Confluence", "GitHub", "Figma", "AWS console", "Docker Desktop"] }
+          },
+          "itNotes": { "type": "string", "title": "Notes" }
+        }
+      },
+      "Equipment": {
+        "type": "array",
+        "title": "Equipment issued",
+        "x-store": "assets",
+        "x-on-complete": "itSetupDone",
+        "items": {
+          "type": "object",
+          "required": ["assetType", "model", "assetNumber", "issuedOn"],
+          "properties": {
+            "assetType": {
+              "type": "string", "title": "Type",
+              "oneOf": [
+                { "const": "LAPTOP", "title": "Laptop" },
+                { "const": "MONITOR", "title": "Monitor" },
+                { "const": "PHONE", "title": "Phone" },
+                { "const": "ACCESS_BADGE", "title": "Access badge" },
+                { "const": "DOCKING_STATION", "title": "Docking station" },
+                { "const": "HEADSET", "title": "Headset" },
+                { "const": "KEYBOARD_MOUSE", "title": "Keyboard &amp; mouse" },
+                { "const": "OTHER", "title": "Other" }
+              ]
+            },
+            "model": { "type": "string", "title": "Model" },
+            "assetNumber": { "type": "string", "title": "Asset no." },
+            "serialNumber": { "type": "string", "title": "Serial number" },
+            "issuedOn": { "type": "string", "title": "Issue date", "format": "date" }
+          }
+        }
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "VerticalLayout",
+    "elements": [
+      {
+        "type": "Group",
+        "label": "Requested by HR",
+        "options": { "readonly": true },
+        "elements": [
+          { "type": "HorizontalLayout", "elements": [
+            { "type": "Control", "scope": "#/properties/Request/properties/itLaptopModel" },
+            { "type": "Control", "scope": "#/properties/Request/properties/itKeyboardLayout" } ] },
+          { "type": "HorizontalLayout", "elements": [
+            { "type": "Control", "scope": "#/properties/Request/properties/itReadyBy" },
+            { "type": "Control", "scope": "#/properties/Request/properties/itDeliveryMethod" } ] },
+          { "type": "Control", "scope": "#/properties/Request/properties/itAccessories" },
+          { "type": "Control", "scope": "#/properties/Request/properties/itAccounts" },
+          { "type": "Control", "scope": "#/properties/Request/properties/itNotes", "options": { "multi": true } }
+        ]
+      },
+      {
+        "type": "Group",
+        "label": "Equipment issued",
+        "elements": [
+          { "type": "Control", "scope": "#/properties/Equipment", "label": "Issued items", "options": { "table": true } }
+        ]
+      }
+    ]
+  },
+  "submitLabel": "Mark setup done"
+}</task-model>
+    </cafienne:implementation>
+</humanTask>
